@@ -53,7 +53,7 @@ class NodoNaranja:
         
         
       
-def HiloRecibidor(inputQueue,sock,nodeID):
+def HiloRecibidor(colaEntrada,sock,nodeID):
     while True:
         payload, client_address = sock.recvfrom(5000)#recibe datos del puerto 5000
         #caso 1 narnja naranja
@@ -85,7 +85,7 @@ def HiloEnviador(colaSalida,sock,routingTable):
        #Orange & Orange
        ##BYTE 9 has the orangetarget    
           targetNode = int.from_bytes(bytePacket[9:10],byteorder='little')
-          #Routing_table returns the address
+         #Routing_table returns the address
           address = routingTable.retrieveAddress(targetNode)
 
           sock.sendto(bytePacket,address)
@@ -98,7 +98,3 @@ def HiloLogico(colaEntrada,colaSalida,sock,blueGraphDir,nodeID):
     
     print("This is a blue to orange pack, still needs the implementation")
  
-   
-
-
-
