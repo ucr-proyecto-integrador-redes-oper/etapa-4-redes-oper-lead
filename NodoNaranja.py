@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import socket
 import pickle
 import sys
@@ -8,15 +9,23 @@ import random
 from RoutingTable import RoutingTable
 
 
+
+
+
 class NodoNaranja:
+
+
 	
     #Aqui se ponen los detalles para ajusta puerto y IP
-    def inicializacion(self, ip = '0.0.0.0', port = 8888, nodeID = 0 ,  routingTableDir = "routingTable.txt", blueGraphDir = "Grafo_Referencia.csv"):
+    def __init__(self,ip,port,nodeID,routingTableDir):
         self.ip = ip
         self.port = port
         self.nodeID = nodeID
         self.routingTableDir = routingTableDir
-        self.blueGraphDir = blueGraphDir
+        #self.blueGraphDir = blueGraphDir
+
+
+        
 
     def run(self):
         server = (self.ip, self.port)
@@ -25,31 +34,22 @@ class NodoNaranja:
 
         ##Creates the routingtable
         routingTable =  RoutingTable(self.routingTableDir)
-
+        #listaVecinos[]
         #Prepara Hilo que recibe mensajes
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(server)
-        print("Listening on " + self.ip + ":" + str(self.port))
+        print("Escuchando: " + self.ip + ":" + str(self.port))
         
+
         ##Hilos recibidor
-        t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID ))
+        t = threading.Thread(target=HiloRecibidor, args=(self.port,colaEntrada,sock,self.nodeID ))
         t.start()
         #hilo enviador
         t2 = threading.Thread(target=HiloEnviador, args=(colaSalida,sock,routingTable ))
         t2.start()
         #hilo logico
-        t3 = threading.Thread(target=HiloLogico, args=(colaEntrada,colaSalida,sock,self.blueGraphDir,self.nodeID  ))
+        t3 = threading.Thread(target=HiloLogico, args=(colaEntrada,colaSalida,sock,self.nodeID  ))
         t3.start()
-        
-        #Para probar paquetes
-        while True:
-         test = int(input())
-         if test == 1:
-          neighborList = []
-         # testPack = obPackage(1,2,'e',0,"0.0.0.1",2,neighborList)
-         #crea paquete tipo naranja azul
-          ByteTestPack = testPack.serialize()
-          colaEntrada.put(ByteTestPack)
         
         
       
@@ -67,6 +67,7 @@ def HiloRecibidor(colaEntrada,sock,nodeID):
             
             colaEntrada.put(payload)
          #If not then just put it to the outputQueue
+        
          else:
            colaSalida.put(payload)
          
@@ -94,7 +95,7 @@ def HiloEnviador(colaSalida,sock,routingTable):
         sock.sendto(bytePacket,address)
  
 
-def HiloLogico(colaEntrada,colaSalida,sock,blueGraphDir,nodeID):
+def HiloLogico(colaEntrada,colaSalida,sock,nodeID):
     
     print("This is a blue to orange pack, still needs the implementation")
  
