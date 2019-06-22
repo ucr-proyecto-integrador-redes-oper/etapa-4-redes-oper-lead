@@ -52,6 +52,12 @@ def main():
     ooPaq2.unserialize(paqueteS)
     ooPaq2.imprimir()
 
+    result = struct.unpack('15p',paqueteS[4:19])
+    print(result)
+    
+    result2 = struct.unpack('h',paqueteS[0:2])
+    print(result2)
+
 if __name__ == "__main__":
     main()
             
