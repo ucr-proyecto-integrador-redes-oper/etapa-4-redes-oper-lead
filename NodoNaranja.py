@@ -7,7 +7,7 @@ import threading
 import struct
 import random
 from RoutingTable import RoutingTable
-
+from n_nPaq import n_nPaq
 
 
 
@@ -22,6 +22,7 @@ class NodoNaranja:
         self.port = port
         self.nodeID = nodeID
         self.routingTableDir = routingTableDir
+
         #self.blueGraphDir = blueGraphDir
 
 
@@ -40,6 +41,16 @@ class NodoNaranja:
         sock.bind(server)
         print("Escuchando: " + self.ip + ":" + str(self.port))
         
+        #(puerto azul, pos en grafo, ip azul, tipo de pack, prioridad, fuente, destino)
+        #r:request,a:accept,w:write,d:decline,g:go
+        test = n_nPaq(8888,566,'0.0.0.0','r',10,3,6)
+        colaEntrada.put(test.serialize())
+        #test2=test.serialize()
+        #targetNode = int.from_bytes(test2[0:1],byteorder='little')#prueba para ver si las posiciones estan bien
+        #test3=test.unserialize(test2);
+        #print (test3.destinoNaranja)
+
+      
 
         ##Hilos recibidor
         t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID ))
@@ -54,17 +65,14 @@ class NodoNaranja:
         
       
 def HiloRecibidor(colaEntrada,sock,nodeID):
-    while True:
+  paquete = n_nPaq()
+  while True:
         payload, client_address = sock.recvfrom(5000)#recibe datos del puerto 5000
         #caso 1 narnja naranja
-        if int.from_bytes(payload[:1],byteorder='little') == 0: 
-         
-         ##BYTE 9 has the orangetarget
-         targetNode = int.from_bytes(payload[9:10],byteorder='little')
-        
-         #If this is a package for me then send it to the inputQueue
-         if nodeID == targetNode:
-            
+        paquete.unserialize(payload)
+
+        print(paquete.destinoNaranja)
+        if paquete.destinoNaranja == nodeID
             colaEntrada.put(payload)
          #If not then just put it to the outputQueue
         
