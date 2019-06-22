@@ -42,7 +42,7 @@ class NodoNaranja:
         
 
         ##Hilos recibidor
-        t = threading.Thread(target=HiloRecibidor, args=(self.port,colaEntrada,sock,self.nodeID ))
+        t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID ))
         t.start()
         #hilo enviador
         t2 = threading.Thread(target=HiloEnviador, args=(colaSalida,sock,routingTable ))
