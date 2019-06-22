@@ -2,7 +2,7 @@
 import socket
 import pickle
 import sys
-import queue
+from Queue import *
 import threading
 import struct
 import random
@@ -30,8 +30,8 @@ class NodoNaranja:
 
     def run(self):
         server = (self.ip, self.port)
-        colaEntrada = queue.Queue()
-        colaSalida = queue.Queue()
+        colaEntrada = Queue()
+        colaSalida = Queue()
 
         ##Creates the routingtable
         routingTable =  RoutingTable(self.routingTableDir)
@@ -44,7 +44,11 @@ class NodoNaranja:
         #(puerto azul, pos en grafo, ip azul, tipo de pack, prioridad, fuente, destino)
         #r:request,a:accept,w:write,d:decline,g:go
         test = n_nPaq(8888,566,'0.0.0.0','r',10,3,6)
-        colaEntrada.put(test.serialize())
+        paquete1 = test.serialize()
+        test.unserialize(paquete1)
+        targetNode = struct.unpack('b',paquete1[25:26])
+        print (targetNode)
+        
         #test2=test.serialize()
         #targetNode = int.from_bytes(test2[0:1],byteorder='little')#prueba para ver si las posiciones estan bien
         #test3=test.unserialize(test2);
@@ -65,19 +69,19 @@ class NodoNaranja:
         
       
 def HiloRecibidor(colaEntrada,sock,nodeID):
-  paquete = n_nPaq()
+  paquete = n_nPaq(7777,566,'01.02.03.04','r',10,2,5)
   while True:
         payload, client_address = sock.recvfrom(5000)#recibe datos del puerto 5000
         #caso 1 narnja naranja
         paquete.unserialize(payload)
 
         print(paquete.destinoNaranja)
-        if paquete.destinoNaranja == nodeID
+        if paquete.destinoNaranja == nodeID:
             colaEntrada.put(payload)
          #If not then just put it to the outputQueue
         
-         else:
-           colaSalida.put(payload)
+        else:
+            colaSalida.put(payload)
          
          ##narnaja azul     
          
