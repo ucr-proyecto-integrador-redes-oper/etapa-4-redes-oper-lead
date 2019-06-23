@@ -2,14 +2,16 @@
 import socket
 import pickle
 import sys
-from Queue import *
 import threading
 import struct
 import random
 from RoutingTable import RoutingTable
 from n_nPaq import n_nPaq
 
-
+try: 
+    import queue
+except ImportError:
+    import Queue as queue
 
 
 class NodoNaranja:
@@ -30,8 +32,8 @@ class NodoNaranja:
 
     def run(self):
         server = (self.ip, self.port)
-        colaEntrada = Queue()
-        colaSalida = Queue()
+        colaEntrada = queue.Queue()
+        colaSalida = queue.Queue()
 
         ##Creates the routingtable
         routingTable =  RoutingTable(self.routingTableDir)
