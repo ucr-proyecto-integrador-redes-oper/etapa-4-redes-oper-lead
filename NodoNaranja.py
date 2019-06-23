@@ -7,6 +7,7 @@ import struct
 import random
 from RoutingTable import RoutingTable
 from n_nPaq import n_nPaq
+from n_aPaq import n_aPaq
 
 
 try: 
@@ -56,7 +57,7 @@ class NodoNaranja:
         paquete2 = test2.serialize()
         test2.unserialize(paquete2)
         print("Puerto",test2.puertoAzul)
-        print("Tipo",test.tipo)
+        print("Tipo",test2.tipo)
         print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
 
         ##Hilos recibidor
