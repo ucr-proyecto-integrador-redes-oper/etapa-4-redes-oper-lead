@@ -8,6 +8,7 @@ import random
 from RoutingTable import RoutingTable
 from n_nPaq import n_nPaq
 
+
 try: 
     import queue
 except ImportError:
@@ -50,7 +51,13 @@ class NodoNaranja:
         #paqtest = test.serialize()
         #colaEntrada.put(paqtest);
         #test.unserialize(paquete1)
-        ##############################################################################3
+        #############################################################################
+        test2 = n_aPaq(1,559,'a',220,'01.02.03.04',5050,[(20,'107.53.2.1',5051),(35,'107.53.2.56',6062)])
+        paquete2 = test2.serialize()
+        test2.unserialize(paquete2)
+        print("Puerto",test2.puertoAzul)
+        print("Tipo",test.tipo)
+        print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
 
         ##Hilos recibidor
         t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID,colaSalida))
