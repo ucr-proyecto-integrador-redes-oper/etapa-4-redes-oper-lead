@@ -49,7 +49,7 @@ class n_nPaq:
 
 # para puebas
 def main():
-	ooPaq = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)
+	ooPaq = n_nPaq(0,145,3,6,'r',350,'01.02.03.04',5050,1000)
 	ooPaq.imprimir()
 
 	paqueteS = ooPaq.serialize()
