@@ -74,10 +74,3 @@ def main():
 	print(p8[0])
 	p9 = struct.unpack('I',paqueteS[32:36]) #prioridad
 	print(p9[0])
-
-if __name__ == "__main__":
-    main()
-             
-    
-    
-

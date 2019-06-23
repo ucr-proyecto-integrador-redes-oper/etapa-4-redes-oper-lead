@@ -7,7 +7,7 @@ import struct
 import random
 from RoutingTable import RoutingTable
 from n_nPaq import n_nPaq
-from n_aPaq import n_aPaq
+
 
 try: 
     import queue
@@ -47,12 +47,11 @@ class NodoNaranja:
         #################################################################################pruebas
         #(categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
         #r:request,a:accept,w:write,d:decline,g:go
-        test = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)#mete de un solo en cola de entrada
-        paqtest = test.serialize()
-        colaEntrada.put(paqtest);
+        #test = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)#mete de un solo en cola de entrada
+        #paqtest = test.serialize()
+        #colaEntrada.put(paqtest);
         #test.unserialize(paquete1)
-        ##############################################################################3
-        
+        #############################################################################
         test2 = n_aPaq(1,559,'a',220,'01.02.03.04',5050,[(20,'107.53.2.1',5051),(35,'107.53.2.56',6062)])
         paquete2 = test2.serialize()
         test2.unserialize(paquete2)
@@ -61,7 +60,7 @@ class NodoNaranja:
         print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
 
         ##Hilos recibidor
-        t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID ))
+        t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID,colaSalida))
         t.start()
         #hilo enviador
         t2 = threading.Thread(target=HiloEnviador, args=(colaSalida,sock,routingTable ))
@@ -72,15 +71,13 @@ class NodoNaranja:
         
         
       
-def HiloRecibidor(colaEntrada,sock,nodeID):
-  paquete = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)
-  n_nPaq.serialize(paquete);
+def HiloRecibidor(colaEntrada,sock,nodeID,colaSalida):
   while True:
         payload, client_address = sock.recvfrom(5000)#recibe datos del puerto 5000
         #caso 1 narnja naranja
-        targetNode = struct.unpack('b',paquete[9:10]) #destino
-        print("Es para: "+ targetNode)
-        if paquete.destinoNaranja == nodeID:
+        targetNode = struct.unpack('b',payload[9:10]) #destino
+        print("Es para: ",targetNode)
+        if targetNode == nodeID:
             colaEntrada.put(payload)
          #If not then just put it to the outputQueue
         
