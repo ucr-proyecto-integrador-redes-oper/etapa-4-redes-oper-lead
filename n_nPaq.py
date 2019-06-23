@@ -49,7 +49,7 @@ class n_nPaq:
 
 # para puebas
 def main():
-	ooPaq = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)
+	ooPaq = n_nPaq(0,145,3,6,'r',350,'01.02.03.04',5050,1000)
 	ooPaq.imprimir()
 
 	paqueteS = ooPaq.serialize()
@@ -74,10 +74,3 @@ def main():
 	print(p8[0])
 	p9 = struct.unpack('I',paqueteS[32:36]) #prioridad
 	print(p9[0])
-
-if __name__ == "__main__":
-    main()
-             
-    
-    
-
