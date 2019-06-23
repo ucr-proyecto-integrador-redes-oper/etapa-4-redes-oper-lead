@@ -1,10 +1,7 @@
-#!/usr/bin/env python
 import socket
-import pickle
 import sys
 import threading
 import struct
-import random
 from RoutingTable import RoutingTable
 from TablaNodosAzules import TablaNodosAzules
 from n_nPaq import n_nPaq
@@ -210,7 +207,7 @@ def HiloLogico(colaEntrada, colaSalida, sock, nodeID):
                     acks_done = True
                     print("recibi todos los acks de la petición: ", nodoSolicitado)
             elif package.tipo == 'w':
-                print("Recibi un Write de parte del nodo naranja ", package.origenNaranja, " Sobre el nodo: ",
+                print("Recibi un Write de parte del nodo naranja: ", package.origenNaranja, " Sobre el nodo: ",
                       package.posGrafo)
 
                 direccion = (package.ipAzul, package.puertoAzul)
@@ -218,16 +215,14 @@ def HiloLogico(colaEntrada, colaSalida, sock, nodeID):
 
                 #write_ack = n_nPaq(0, sn, nodeID, package.origenNaranja, 's', posGrafo, ipAzul, puertoAzul, prioridad)
                 # por definirse, mas los acks seguramente iran por secure UDP.
-            elif package = 'g': #Go package, por definirse.
-                #cuerpo del go package.
-
-        else: #el paquete es naranja-azul
-            # cuerpo del naranja-azul
-
+            elif package == 'g': #Go package, por definirse. # cuerpo del go package.
+                print("Recibi un Go package de parte del nodo naranja: ", package.origenNaranja)
+        else: #el paquete es naranja-azul # cuerpo del naranja-azul
+            print("Comunicación naranja-azul")
 
         if acks_done == True:
             for node in range(0, MAX_NODOS_NARANJA):
-            write_package = n_nPaq(0, sn, nodeID, node, 'w', posGrafo, ipAzul, puertoAzul, prioridad)
-            write_package.imprimir()
-            bytes_write = write_package.serialize()
-            colaSalida.put(bytes_write)
+                write_package = n_nPaq(0, sn, nodeID, node, 'w', posGrafo, ipAzul, puertoAzul, prioridad)
+                write_package.imprimir()
+                bytes_write = write_package.serialize()
+                colaSalida.put(bytes_write)
