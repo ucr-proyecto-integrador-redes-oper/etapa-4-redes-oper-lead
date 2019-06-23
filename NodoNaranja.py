@@ -2,14 +2,16 @@
 import socket
 import pickle
 import sys
-import queue
 import threading
 import struct
 import random
 from RoutingTable import RoutingTable
+from n_nPaq import n_nPaq
 
-
-
+try: 
+    import queue
+except ImportError:
+    import Queue as queue
 
 
 class NodoNaranja:
@@ -22,6 +24,7 @@ class NodoNaranja:
         self.port = port
         self.nodeID = nodeID
         self.routingTableDir = routingTableDir
+
         #self.blueGraphDir = blueGraphDir
 
 
@@ -40,6 +43,14 @@ class NodoNaranja:
         sock.bind(server)
         print("Escuchando: " + self.ip + ":" + str(self.port))
         
+        #################################################################################pruebas
+        #(categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
+        #r:request,a:accept,w:write,d:decline,g:go
+        test = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)#mete de un solo en cola de entrada
+        paqtest = test.serialize()
+        colaEntrada.put(paqtest);
+        #test.unserialize(paquete1)
+        ##############################################################################3
 
         ##Hilos recibidor
         t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID ))
@@ -54,22 +65,19 @@ class NodoNaranja:
         
       
 def HiloRecibidor(colaEntrada,sock,nodeID):
-    while True:
+  paquete = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)
+  n_nPaq.serialize(paquete);
+  while True:
         payload, client_address = sock.recvfrom(5000)#recibe datos del puerto 5000
         #caso 1 narnja naranja
-        if int.from_bytes(payload[:1],byteorder='little') == 0: 
-         
-         ##BYTE 9 has the orangetarget
-         targetNode = int.from_bytes(payload[9:10],byteorder='little')
-        
-         #If this is a package for me then send it to the inputQueue
-         if nodeID == targetNode:
-            
+        targetNode = struct.unpack('b',paquete[9:10]) #destino
+        print("Es para: "+ targetNode)
+        if paquete.destinoNaranja == nodeID:
             colaEntrada.put(payload)
          #If not then just put it to the outputQueue
         
-         else:
-           colaSalida.put(payload)
+        else:
+            colaSalida.put(payload)
          
          ##narnaja azul     
          
@@ -96,6 +104,9 @@ def HiloEnviador(colaSalida,sock,routingTable):
  
 
 def HiloLogico(colaEntrada,colaSalida,sock,nodeID):
-    
-    print("This is a blue to orange pack, still needs the implementation")
+  paq = n_nPaq(1,0,0,0,'d',0,'0.0.0.0',0,0)
+  
+  test=colaEntrada.get()#saca de cola
+  paq.unserialize(test);#ya puede usar paq para todo 
+  print(paq.puertoAzul)
  
