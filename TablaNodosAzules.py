@@ -1,7 +1,4 @@
-import cvs
-import socket
-import random
-import sys
+import csv, socket, random, sys
 
 class TablaNodosAzules:
     def __init__(self, dirGrafoAzul):
@@ -11,7 +8,7 @@ class TablaNodosAzules:
         self.EMPTY_ADDRESS = ('0.0.0.0', -1)
         try:
             with open(dirGrafoAzul, newline='') as File:
-                reader = cvs.reader(File)
+                reader = csv.reader(File)
                 for fila in reader:
                     self.grafoNodosAzules[int(fila[0])] = list(map(int, fila[1:]))
                     self.nodosDisponibles.append(int(fila[0]))
@@ -66,14 +63,14 @@ class TablaNodosAzules:
 
 
 
-if __name__ = "__main__":
-
-    tablaNodosAzules = TablaNodosAzules("Grafo_Referencia.cvs")
-    tablaNodosAzules.write(5,('125.1.25.134', 88885))
-    tablaNodosAzules.write(4,('125.1.25.134', 88884))
-    tablaNodosAzules.write(8,('125.1.25.134', 88883))
-    tablaNodosAzules.marcarComoSolicitado(2)
-    print(tablaNodosAzules.nodosDisponibles)
-    print(tablaNodosAzules.getListaVecinos)
-    print(tablaNodosAzules.getNodoDisponible())
+#if __name__ = "__main__":
+#
+ #   tablaNodosAzules = TablaNodosAzules("Grafo_Referencia.cvs")
+  #  tablaNodosAzules.write(5,('125.1.25.134', 88885))
+   # tablaNodosAzules.write(4,('125.1.25.134', 88884))
+    #tablaNodosAzules.write(8,('125.1.25.134', 88883))
+   # tablaNodosAzules.marcarComoSolicitado(2)
+    #print(tablaNodosAzules.nodosDisponibles)
+    #print(tablaNodosAzules.getListaVecinos)
+    #print(tablaNodosAzules.getNodoDisponible())
 

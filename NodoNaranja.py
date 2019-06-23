@@ -59,7 +59,7 @@ class NodoNaranja:
         t2 = threading.Thread(target=HiloEnviador, args=(colaSalida, sock, routingTable))
         t2.start()
         # hilo logico
-        t3 = threading.Thread(target=HiloLogico, args=(colaEntrada, colaSalida, sock, self.nodeID))
+        t3 = threading.Thread(target=HiloLogico, args=(colaEntrada, colaSalida, sock, "Grafo_Referencia.csv", self.nodeID))
         t3.start()
       
 def HiloRecibidor(colaEntrada,sock,nodeID,colaSalida):
@@ -97,14 +97,14 @@ def HiloEnviador(colaSalida, sock, routingTable):
             sock.sendto(bytePacket, address)
 
 
-def HiloLogico(colaEntrada, colaSalida, sock, nodeID):
+def HiloLogico(colaEntrada, colaSalida, sock, dirGrafoAzul, nodeID):
     # print("This is a blue to orange pack, still needs the implementation")
     # paq = n_nPaq(1,0,0,0,'d',0,'0.0.0.0',0,0)
 
     # test=colaEntrada.get()#saca de cola
     # paq.unserialize(test);#ya puede usar paq para todo
     # print(paq.puertoAzul)
-    tabla = TablaNodosAzules()
+    tabla = TablaNodosAzules(dirGrafoAzul)
     puertoAzul = 8888
     posGrafo = 0
     ipAzul = "0.0.0.0"
