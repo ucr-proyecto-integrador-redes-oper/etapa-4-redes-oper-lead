@@ -78,6 +78,23 @@ def main():
     p9 = struct.unpack('I', paqueteS[32:36])  # prioridad
     print(p9[0])
 
-
-if __name__ == "__main__":
-    main()
+#	ooPaq.unserialize(paqueteS)
+#
+#	p1 = struct.unpack('b',paqueteS[0:1]) #categoria
+#	print(p1[0])
+#	p2 = struct.unpack('I',paqueteS[4:8]) #SN
+#	print(p2[0])
+#	p3 = struct.unpack('b',paqueteS[8:9]) #origen
+#	print(p3[0])
+#	p4 = struct.unpack('b',paqueteS[9:10]) #destino
+#	print(p4[0])
+#	p5 = struct.unpack('c',paqueteS[10:11]) #tipo
+#	print(p5[0])
+#	p6 = struct.unpack('h',paqueteS[12:14]) #posGrafo
+#	print(p6[0])
+#	p7 = struct.unpack('15p',paqueteS[14:29]) #IP
+#	print(p7[0])
+#	p8 = struct.unpack('h',paqueteS[30:32]) #puerto
+#	print(p8[0])
+#	p9 = struct.unpack('I',paqueteS[32:36]) #prioridad
+#	print(p9[0])
