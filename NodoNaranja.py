@@ -7,6 +7,8 @@ import threading
 import struct
 import random
 from RoutingTable import RoutingTable
+from TablaNodosAzules import TablaNodosAzules
+from n_nPaq import n_nPaq
 
 
 
@@ -97,5 +99,24 @@ def HiloEnviador(colaSalida,sock,routingTable):
 
 def HiloLogico(colaEntrada,colaSalida,sock,nodeID):
     
-    print("This is a blue to orange pack, still needs the implementation")
- 
+    # print("This is a blue to orange pack, still needs the implementation")
+    puertoAzul = 8888
+    posGrafo = 0
+    ipAzul = "0.0.0.0"
+    nodoSolicitado = -1
+    prioridad = 0
+
+    sn = nodeID
+    MAX_NODOS_NARANJA = 6
+
+    while True:
+
+        packet = colaEntrada.get()
+        if int.from_bytes(packet[:1], byteorder='little') == 0:
+            package = n_nPaq()
+            package.unserialize(packet)
+            if package.tipo == 'r':
+                print("Packet request from: ", package.origenNaranja, " pidiendo el numero: ", package.posGrafo, " con la prioridad: ", package.prioridad)
+                if package.posGrafo == nodoSolicitado:
+                    if package.prioridad < prioridad:
+                        print("Gané la shokugeki por el nodo ", nodoSolicitado , " (My ID: ", nodeID ," Mi prioridad: ", prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad ,")")
