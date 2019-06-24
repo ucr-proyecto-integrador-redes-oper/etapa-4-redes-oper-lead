@@ -40,13 +40,21 @@ class NodoNaranja:
         #################################################################################pruebas
         #(categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
         #r:request,a:accept,w:write,d:decline,g:go
-        test = n_nPaq(0,145,3,6,'r',350,'01.02.03.04',5050,1000)#mete de un solo en cola de entrada
+        for i in range(0,10):
+            test = n_nPaq(0,145+i,i%6,6,'r',350+i,'01.02.03.04',5050,500+i)#mete de un solo en cola de entrada
+            print("Serializando el paquete de prueba")
+            paqtest = test.serialize()
+            print("Luego de la serialización")
+            colaEntrada.put(paqtest)
+
+        test = n_nPaq(0, 145, 3, 6, 'a', 350, '01.02.03.04', 5050,
+                      500)  # mete de un solo en cola de entrada
         print("Serializando el paquete de prueba")
         paqtest = test.serialize()
         print("Luego de la serialización")
-        colaEntrada.put(paqtest);
+        colaEntrada.put(paqtest)
 
-        test.unserialize(paqtest)
+        #test.unserialize(paqtest)
         #############################################################################
         #test2 = n_aPaq(1,559,'a',220,'01.02.03.04',5050,[(20,'107.53.2.1',5051),(35,'107.53.2.56',6062)])
         #paquete2 = test2.serialize()
