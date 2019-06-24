@@ -40,31 +40,37 @@ class NodoNaranja:
         #################################################################################pruebas
         #(categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
         #r:request,a:accept,w:write,d:decline,g:go
-        #test = n_nPaq(2,145,3,6,'r',350,'01.02.03.04',5050,1000)#mete de un solo en cola de entrada
-        #paqtest = test.serialize()
-        #colaEntrada.put(paqtest);
-        #test.unserialize(paquete1)
+        test = n_nPaq(0,145,3,6,'r',350,'01.02.03.04',5050,1000)#mete de un solo en cola de entrada
+        print("Serializando el paquete de prueba")
+        paqtest = test.serialize()
+        print("Luego de la serialización")
+        colaEntrada.put(paqtest);
+
+        test.unserialize(paqtest)
         #############################################################################
-        test2 = n_aPaq(1,559,'a',220,'01.02.03.04',5050,[(20,'107.53.2.1',5051),(35,'107.53.2.56',6062)])
-        paquete2 = test2.serialize()
-        test2.unserialize(paquete2)
-        print("Puerto",test2.puertoAzul)
-        print("Tipo",test2.tipo)
-        print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
+        #test2 = n_aPaq(1,559,'a',220,'01.02.03.04',5050,[(20,'107.53.2.1',5051),(35,'107.53.2.56',6062)])
+        #paquete2 = test2.serialize()
+        #test2.unserialize(paquete2)
+        #print("Puerto",test2.puertoAzul)
+        #print("Tipo",test2.tipo)
+        #print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
 
         ##Hilos recibidor
         t = threading.Thread(target=HiloRecibidor, args=(colaEntrada,sock,self.nodeID,colaSalida))
         t.start()
+        print("hilo recibidor iniciado")
         # hilo enviador
         t2 = threading.Thread(target=HiloEnviador, args=(colaSalida, sock, routingTable))
         t2.start()
+        print(("hilo enviador iniciado"))
         # hilo logico
         t3 = threading.Thread(target=HiloLogico, args=(colaEntrada, colaSalida, sock, "Grafo_Referencia.csv", self.nodeID))
         t3.start()
+        print("hilo logico iniciado")
       
 def HiloRecibidor(colaEntrada,sock,nodeID,colaSalida):
   while True:
-        payload, client_address = sock.recvfrom(5000)#recibe datos del puerto 5000
+        payload, client_address = sock.recvfrom(8888)#recibe datos del puerto 5000
         #caso 1 narnja naranja
         targetNode = struct.unpack('b',payload[9:10]) #destino
         print("Es para: ",targetNode)
@@ -122,10 +128,13 @@ def HiloLogico(colaEntrada, colaSalida, sock, dirGrafoAzul, nodeID):
     while True:
 
         packet = colaEntrada.get()
+        print("Paquete obtenido en hilo logico")
         if int.from_bytes(packet[:1], byteorder='little') == 0:
-            package = n_nPaq()
+            print("el paquete es naranja-naranja")
+            package = n_nPaq(0,nodeID,nodeID,nodeID,'',0,"0.0.0.0",5000,0)
             package.unserialize(packet)
-            if package.tipo == 'r':
+            print(package.categoria, package.sn, package.origenNaranja, package.destinoNaranja, package.puertoAzul, package.ipAzul, str(package.tipo), package.posGrafo, package.prioridad)
+            if package.tipo == b'r': # Request de un pquete (solicitud)
                 print("Packet request from: ", package.origenNaranja, " pidiendo el numero: ", package.posGrafo,
                       " con la prioridad: ", package.prioridad)
                 if package.posGrafo == nodoSolicitado:  # yo pedi ese mismo nodo y por tanto hay conflicto
@@ -187,14 +196,14 @@ def HiloLogico(colaEntrada, colaSalida, sock, dirGrafoAzul, nodeID):
                     accept_bytes = accept.serialize()
 
                     colaSalida.put(accept_bytes)
-            elif package.tipo == 'd':
+            elif package.tipo == b'd':
                 print("Recibi un decline por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
                       nodoSolicitado, " De parte del nodo azul: ", ipAzul)
 
                 acks.append('d')
                 # esto significa que perdí el paquete por lo que tengo que detener la espera de acks.
 
-            elif package.tipo == 'a':
+            elif package.tipo == b'a':
                 print("Recibi un accept por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
                       nodoSolicitado, " De parte del nodo azul: ", ipAzul)
                 acks.append('a')
@@ -202,7 +211,7 @@ def HiloLogico(colaEntrada, colaSalida, sock, dirGrafoAzul, nodeID):
                 if len(acks) == MAX_NODOS_NARANJA - 1:
                     acks_done = True
                     print("recibi todos los acks de la petición: ", nodoSolicitado)
-            elif package.tipo == 'w':
+            elif package.tipo == b'w':
                 print("Recibi un Write de parte del nodo naranja: ", package.origenNaranja, " Sobre el nodo: ",
                       package.posGrafo)
 

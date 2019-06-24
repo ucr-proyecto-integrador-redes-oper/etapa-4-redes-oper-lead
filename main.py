@@ -1,4 +1,4 @@
 from NodoNaranja import NodoNaranja
 
-nodo=NodoNaranja('0.0.0.0',8888,1,"routingTable.txt")
+nodo=NodoNaranja('192.168.0.22',8888,1,"routingTable.txt")
 nodo.run()
