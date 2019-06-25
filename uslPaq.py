@@ -5,7 +5,7 @@ import pickle
 
 class uslPaq:
 
-    def __init__(self, tip = -1, sn = 0, pay = '', timeStamp = 0.0, address = ("0.0.0.0", 0)):
+    def __init__(self, tip=-1, sn=0, pay='', timeStamp=0.0, address=("0.0.0.0", 0)):
         self.tip = tip
         self.sn = sn
         self.payload = pay
@@ -56,4 +56,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
