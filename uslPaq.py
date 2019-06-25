@@ -44,7 +44,7 @@ def main():
 
 	uslPrueba.unserialize(paqueteS)
 
-	p1 = struct.unpack('b', paqueteS[0:1])  # categoria
+	p1 = struct.unpack('b', paqueteS[0:1])  # tipo
 	print(p1[0])
 	p2 = struct.unpack('h', paqueteS[2:4])  # SN
 	print(p2[0])
