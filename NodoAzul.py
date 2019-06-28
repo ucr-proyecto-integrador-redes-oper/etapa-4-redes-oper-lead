@@ -3,7 +3,7 @@ import socket
 import sys
 import threading
 import struct
-from a_aPaq import a_aPaq
+from uslPaq import uslPaq
 
 try:
     import queue
@@ -31,7 +31,11 @@ class NodoAzul:
         server = (self.ip, self.port)
         colaEntrada = queue.Queue()
         colaSalida = queue.Queue()
-        package = a_aPaq(0,1,"hola",('10.1.137.29',8887))
+        package = uslPaq(0,1,"hola",('10.1.137.29',8888))
+        package.ip = '10.1.137.29'
+        package.port = 8888
+       
+        
         colaSalida.put(package)
         # listaVecinos[]
         # Prepara Hilo que recibe mensajes
@@ -52,11 +56,15 @@ class NodoAzul:
     
 def HiloRecibidor(colaEntrada,sock,nodeID,colaSalida):
   while True:
-	  payload, client_address = sock.recvfrom(1024)
+	  payload, client_address = sock.recvfrom(1035)
 	  print("Paquete obtenido")
-	  package = a_aPaq(0,0,0,client_address)
+	  print(f"{client_address[0]} , {client_address[1]}")
+	  print(client_address)
+	  package = uslPaq(0,0,0,0)
+	  package.ip = client_address[0]
+	  package.port = client_address[1]
 	  package.unserialize(payload)
-	  print("Mensaje de Tipo", package.tipo,"De SN=", package.sn,"Que contiene:",package.payload,"Proveniente de:", package.direccion)
+	  print("Mensaje de Tipo", package.tipo,"De SN=", package.sn,"Que contiene:",package.payload,"Proveniente de:", package.ip)
 	  colaSalida.put(package)
            
       
@@ -68,10 +76,9 @@ def HiloEnviador(colaSalida, sock):
         ##Takes a package from the queue. If the queue is empty it waits until a package arrives
       
        package = colaSalida.get()    
-       print(package.direccion)
-       address = package.direccion
+       print(f"{package.ip} , {package.port}")
+       ip = package.ip
+       port = package.port
        pak=package.serialize()
-       sock.sendto(pak, address)
-       print("mensaje enviado")
-
-
+       sock.sendto(pak, (ip,port))
+print("mensaje enviado")
