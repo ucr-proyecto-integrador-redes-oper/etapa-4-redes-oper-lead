@@ -26,8 +26,7 @@ class USL:
         self.TIMEOUT = timeout
         self.cola_enviar = []
         self.cola_recibir = []
-        self.SNRN = rand.randrange(65536)
-        self.timeStamp = time.time()
+        self.SNRN = rand.randrange(32768)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # self.blueGraphDir = blueGraphDir
@@ -36,11 +35,11 @@ class USL:
         self.sock.bind((self.ip, self.port))
         print("Escuchando: " + self.ip + ":" + str(self.port))
 
-
+        self.timeStamp = time.time()
         t = threading.Thread(target=self.manageTimeOuts)
         t.start()
         print("inicio de timeouts para enviar logrado.")
-
+	
         t2 = threading.Thread(target=self.HiloRecibidor)
         t2.start()
         print("inicio de hilo para recibir logrado.")
@@ -59,8 +58,7 @@ class USL:
                 client_ip = address[0] # ip
                 client_port = address[1] # puerto
                 paquete = uslPaq(1, paquete.sn, payload, client_ip, client_port)
-                ack = paquete.serialize()
-                self.cola_enviar.append(ack)
+                self.cola_enviar.append(paquete)
                 self.cola_recibir.append((payload,address))
             else: # si es un ACK
                 for package in self.cola_enviar:
@@ -76,13 +74,14 @@ class USL:
     def manageTimeOuts(self):
         print("entré a manageTimeOuts()")
         while True:
-            if self.timeStamp - time.time() > self.TIMEOUT:
+            #print("Time stamp: ", self.timeStamp - time.time() )
+            if time.time() - self.timeStamp > self.TIMEOUT:
                 self.HiloEnviador()
                 self.timeStamp = time.time()
                 print("inicio un nuevo timeOut")
 
     def nextSNRN(self, SNRN):
-        next = (SNRN + 1) % 65536
+        next = (SNRN + 1) % 32768
         return next
 
     def send(self, payload, ip, port):
