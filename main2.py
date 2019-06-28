@@ -6,5 +6,5 @@ usl = USL(ip, port, 5)
 usl.run()
 print("entré a run y salí")
 while True:
-    paquete = usl.recibir()
-    print(paquete)
+    paquete, address = usl.recibir()
+    print(paquete, " desde ", address)

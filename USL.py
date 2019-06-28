@@ -71,6 +71,7 @@ class USL:
         while True:
             if len(self.cola_recibir) > 0:
                 self.cola_recibir.pop(0) #saca el primer elemento a recibir
+                break;
 
     def manageTimeOuts(self):
         print("entré a manageTimeOuts()")
