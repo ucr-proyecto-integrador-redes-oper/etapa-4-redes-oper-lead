@@ -5,13 +5,13 @@ import pickle
 
 class uslPaq:
 
-    def __init__(self, tip=-1, sn=0, pay='', timeStamp=0.0, address=("0.0.0.0", 0)):
-        self.tip = tip
+    def __init__(self, tip=-1, sn=0, pay='', timeStamp=0.0, ip = '0.0.0.0', port=0000):
+        self.tipo = tip
         self.sn = sn
         self.payload = pay
         self.timeStamp = timeStamp
-        self.ip = address[0]
-        self.port = address[1]
+        self.ip = ip
+        self.port = port
 
     def serialize(self):
         paquete = struct.pack('bh', self.tipo, self.sn)
@@ -35,7 +35,6 @@ class uslPaq:
         print("SN = ", self.sn)
         print("Payload = ", self.payload)
         print("---------------------------")
-
 
 # ----------------------------------------------------------
 

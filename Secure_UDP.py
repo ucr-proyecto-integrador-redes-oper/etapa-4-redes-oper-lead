@@ -1,63 +1,156 @@
-import socket
 import time
+import struct
+import socket as socket
+import queue
+import threading
+from n_nPaq import n_nPaq
 from uslPaq import uslPaq
 
+class PacketStruct:
+    def __init__(self, ip=0, port=0, payload=b'', sn=0, timeStamp=0.0):
+        self.ip = ip
+        self.port = port
+        self.payload = payload
+        self.sn = sn
+        self.timeStamp = timeStamp
 
-class Secure_UDP:
-    TIMEOUT = 0.2  # Constante del timeout
-    timeStamp = 0
-    ackWindow = []  # Ventana de acks
-    last_sent = 0  # Ultimo enviado
+
+class SecureUdp:
+    TIMEOUT = 5
+    TimeStamp = 0
+    # Esta es la ventana que muestra el espacio libre
+    AckWindow = []
+    index_last_sent = 0
     waiting_queue = []
     SNRN = 0
-    sockUDP = 0
-    acksReceived = []
+    sock = 0
+    AcksReceived = []
     MAX_WINDOW_SIZE = 4
+    reciveQueue = queue.Queue()
 
-    def __init__(self, Window_size, ip, port):
-        self.window_size = Window_size
-        for index in range(self.window_size):
-            packet = uslPaq()
-            self.ackWindow.append(packet)
-        self.sockUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
-        self.sockUDP.bind(ip, port)
+    '''
+        EFE: Contruye la clase SecureUdp
+        REQ: Se requiere el tamaño de la ventana para llenarlo
+        MOD: ---
+    '''
 
-    def checkTimeOuts(self):
+    def __init__(self, window_size, timeout, ip, port):
+        self.window_size = window_size
+        self.TIMEOUT = timeout
+        self.MAX_WINDOW_SIZE = window_size
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
+        self.sock.bind((ip, port))
+        ##Creates the Threads
+        send = threading.Thread(target=self.dummysendThread, args=())
+        send.start()
+
+        ##Creates the Threads
+        recive = threading.Thread(target=self.dummyReceive, args=())
+        recive.start()
+
+    '''
+        EFE: Checkea el campo de tiempo a ver si ya está en timeout
+        REQ: ---
+        MOD: Ackwindow
+    '''
+
+    def checkTimeStamps(self):  # resuelve todos los problemas, hasta nachos gg izi pici
         to_delete = []
-        for item in self.ackWindow:
-            if self.acksReceived.count(item.sn + 1) > 0:
-                to_delete.append(item)
-            elif (time.time() - item.timeStamp) > self.TIMEOUT:
-                address = (item.ip, item.port)
-                self.sockUDP.sendto(item.payload, address)
+        for item in self.AckWindow:
+            if (self.AcksReceived.count(item.sn) > 0):
+                # print("Put shit in the ackreceived queue")
+                to_delete.append(item)  # Haven't received the ack
+            elif ((time.time() - item.timeStamp) > self.TIMEOUT):
+                print("TimesUp For Ack ", item.sn)
+                self.sock.sendto(item.payload, (item.ip, item.port))
+                # resets the timestamp with the current time since we just resend it.
                 item.timeStamp = time.time()
 
-        for deleted in to_delete:
-            self.ackWindow.remove(deleted)
+        for deleted in to_delete:  # Solo borra lo que hay en todelete
+            self.AckWindow.remove(deleted)
 
-    def nextSNRN(self, SNRN):
-        SN = (SNRN + 1) % 65535
+    '''
+        EFE: Devuelve el SNRN evitando que el mismo sea mas grande que la capacidad de un short
+        REQ:  ---
+        MOD: self.SNRN
+    '''
+
+    def nextSNRN(self, SN):
+        SN = (SN + 1) % 65535
         return SN
 
-    def Sender(self, payload, address):
-        ip, port = address
-        if not len(self.waiting_queue) and len(self.ackWindow) < self.MAX_WINDOW_SIZE: # Si hay espacio en la ventana
-            client = (ip, port)
-            self.SNRN = self.nextSNRN(self.SNRN) # avanza el SN
-            paqueteSecure = uslPaq(0, self.SNRN, payload, time.time(), client)
-            paquete = paqueteSecure.serialize()
-            self.sockUDP.sendto(paquete, client)
-            self.ackWindow.append(paqueteSecure)
-        else:
-            self.waiting_queue.append((ip, port, payload))
+    '''
+        EFE: Envía un mensaje a otro SUDP y activa un timer, si no hay espacio en la ventana lo guarda en eun queue
+          REQ: ---
+        MOD: AckWindow
+    '''
 
-    def Receiver(self, ip, port):
+    def dummysendThread(self):
         while True:
-            payload, client_addr = self.sockUDP.recvfrom(1024)
-            if int.from_bytes(payload[:1], byteorder='little') == 0:
-                paquete = uslPaq(1, self.nextSNRN(int.from_bytes(payload[1:3], byteorder='little'), payload))
-                ack_payload = paquete.serialize()
-                self.sockUDP.sendto(ack_payload, client_addr)
-                return (payload, client_addr)
+            if len(self.AckWindow) < self.MAX_WINDOW_SIZE:  # Si tiene campo en la ventana
+                if len(self.waiting_queue) > 0:  #
+                    ip, port, payload = self.waiting_queue.pop(0)
+                    client = (ip, port)
+                    modified_payload = struct.pack('!bH', 0, self.SNRN) + payload
+                    print("Sending To ", ip, ":", str(port), "with Sn ", self.SNRN)
+                    self.sock.sendto(modified_payload, client)  # Envía!!!
+                    self.AckWindow.append(PacketStruct(ip, port, modified_payload, self.SNRN, time.time()))
+                    # self.SNRN = self.SNRN + 1
+                    self.SNRN = self.nextSNRN(self.SNRN)
+
+            self.checkTimeStamps()
+
+    def sendto(self, payload, ip, port):
+        self.waiting_queue.append((ip, port, payload))
+
+    '''
+        EFE: Se mantiene a la espera de un mensaje
+        REQ: Conexción activa
+        MOD: ---
+    '''
+
+    # payload, client_address = sock.recvfrom(5000)
+    # if int.from_bytes(payload[:1], byteorder='little') == 0:
+
+    def recivefrom(self):
+        payload = self.reciveQueue.get(block=True, timeout=None)
+        return payload[3:]
+
+    def dummyReceive(self):
+        while True:  # matiene la conexión
+            payload, client_addr = self.sock.recvfrom(5000)  # Buffer size
+            #			print("i just receive ",payload," from client ",client_addr)
+            if int.from_bytes(payload[:1], byteorder='big') == 0:
+                # THIS ISNT GONNA WORK ON FIRST TRY
+                sn_received = int.from_bytes(payload[1:3], byteorder='big')
+                # sn_to_send = self.nextSNRN(sn_received)
+                # print("\tsending ACK with SN: %d" % (sn_to_send))
+                ack_payload = struct.pack('!bH', 1, sn_received)
+                # print(payload)
+                self.sock.sendto(ack_payload, client_addr)
+                self.reciveQueue.put(payload)
+
             else:
-                self.acksReceived.append(int.from_bytes(payload[1:3]))
+                ACK_received = int.from_bytes(payload[1:3], byteorder='big')
+                print("Received: ACK ", ACK_received)
+                # print("ACK Payload: ", payload)
+                self.AcksReceived.append(ACK_received)
+
+
+def main():
+    ip = input("My ip ")
+    port = input("My port ")
+    ip2 = input("other ip ")
+    port2 = input("other port ")
+
+    test = SecureUdp(100, 4, ip, port)
+
+    t = threading.Thread(target=test.dummyReceive, args=(test,))
+    t.start()
+
+    pack= b'hola'
+    test.sendto(pack,ip,int(port2))
+
+
+if __name__ == "__main__":
+    main()
