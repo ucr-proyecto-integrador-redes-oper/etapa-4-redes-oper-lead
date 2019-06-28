@@ -40,19 +40,19 @@ class NodoNaranja:
         #################################################################################pruebas
         #(categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
         #r:request,a:accept,w:write,d:decline,g:go
-        for i in range(0,10):
-            test = n_nPaq(0,145+i,i%6,6,'r',350+i,'01.02.03.04',5050,500+i)#mete de un solo en cola de entrada
-            print("Serializando el paquete de prueba")
-            paqtest = test.serialize()
-            print("Luego de la serialización")
-            colaEntrada.put(paqtest)
+        # for i in range(0,10):
+            # test = n_nPaq(0,145+i,i%6,6,'r',350+i,'01.02.03.04',5050,500+i)#mete de un solo en cola de entrada
+            # print("Serializando el paquete de prueba")
+            # paqtest = test.serialize()
+            # print("Luego de la serialización")
+            # colaEntrada.put(paqtest)
 
-        test = n_nPaq(0, 145, 3, 6, 'a', 350, '01.02.03.04', 5050,
-                      500)  # mete de un solo en cola de entrada
-        print("Serializando el paquete de prueba")
-        paqtest = test.serialize()
-        print("Luego de la serialización")
-        colaEntrada.put(paqtest)
+        # test = n_nPaq(0, 145, 3, 6, 'a', 350, '01.02.03.04', 5050,
+                      # 500)  # mete de un solo en cola de entrada
+        # print("Serializando el paquete de prueba")
+        # paqtest = test.serialize()
+        # print("Luego de la serialización")
+        # colaEntrada.put(paqtest)
 
         #test.unserialize(paqtest)
         #############################################################################
@@ -78,11 +78,12 @@ class NodoNaranja:
       
 def HiloRecibidor(colaEntrada,sock,nodeID,colaSalida):
   while True:
-        payload, client_address = sock.recvfrom(8888)#recibe datos del puerto 5000
+        payload, client_address = sock.recvfrom(1035)#recibe datos del puerto 5000
         #caso 1 narnja naranja
         targetNode = struct.unpack('b',payload[9:10]) #destino
         print("Es para: ",targetNode)
-        if targetNode == nodeID:
+        print("Yo soy: ",nodeID)
+        if targetNode[0] == nodeID:
             colaEntrada.put(payload)
         # If not then just put it to the outputQueue
 
@@ -134,7 +135,7 @@ def HiloLogico(colaEntrada, colaSalida, sock, dirGrafoAzul, nodeID):
     MAX_NODOS_NARANJA = 6
 
     while True:
-
+        print("Entra al while True y espera en cola")
         packet = colaEntrada.get()
         print("Paquete obtenido en hilo logico")
         if int.from_bytes(packet[:1], byteorder='little') == 0:
