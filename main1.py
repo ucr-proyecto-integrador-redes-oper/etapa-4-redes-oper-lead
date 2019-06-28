@@ -1,4 +1,7 @@
-from NodoAzul import NodoAzul
+from USL import USL
 
-nodo=NodoAzul('10.1.137.29',8887,1)
-nodo.run()
+ip = "10.232.250.41"
+port = 8000
+usl = USL(ip, port, 5)
+
+usl.send("hola, esto es una prueba", "10.232.250.41", 8001)

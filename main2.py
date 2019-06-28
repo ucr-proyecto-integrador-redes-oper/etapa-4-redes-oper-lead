@@ -1,4 +1,10 @@
-from NodoAzul import NodoAzul
+from USL import USL
 
-nodo=NodoAzul('10.1.137.29',8888,2)
-nodo.run()
+ip = "10.232.250.41"
+port = 8001
+usl = USL(ip, port, 5)
+usl.run()
+print("entré a run y salí")
+while True:
+    paquete = usl.recibir()
+    print(paquete)

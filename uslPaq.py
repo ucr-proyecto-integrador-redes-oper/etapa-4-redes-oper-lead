@@ -5,11 +5,10 @@ import pickle
 
 class uslPaq:
 
-    def __init__(self, tip=-1, sn=0, pay='', timeStamp=0.0, ip = '0.0.0.0', port=0000):
-        self.tipo = tip
+    def __init__(self, type=-1, sn=0, pay='', ip = '0.0.0.0', port=0000):
+        self.tipo = type
         self.sn = sn
         self.payload = pay
-        self.timeStamp = timeStamp
         self.ip = ip
         self.port = port
 
