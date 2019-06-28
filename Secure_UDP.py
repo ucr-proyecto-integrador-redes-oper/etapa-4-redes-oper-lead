@@ -54,7 +54,7 @@ class SecureUdp:
         MOD: Ackwindow
     '''
 
-    def checkTimeStamps(self):  # resuelve todos los problemas, hasta nachos gg izi pici
+    def checkTimeOuts(self):  # resuelve todos los problemas, hasta nachos gg izi pici
         to_delete = []
         for item in self.AckWindow:
             if (self.AcksReceived.count(item.sn) > 0):
@@ -85,7 +85,7 @@ class SecureUdp:
         MOD: AckWindow
     '''
 
-    def dummysendThread(self):
+    def sendThread(self):
         while True:
             if len(self.AckWindow) < self.MAX_WINDOW_SIZE:  # Si tiene campo en la ventana
                 if len(self.waiting_queue) > 0:  #
@@ -116,7 +116,7 @@ class SecureUdp:
         payload = self.reciveQueue.get(block=True, timeout=None)
         return payload[3:]
 
-    def dummyReceive(self):
+    def receiveThread(self):
         while True:  # matiene la conexión
             payload, client_addr = self.sock.recvfrom(5000)  # Buffer size
             #			print("i just receive ",payload," from client ",client_addr)
@@ -145,7 +145,7 @@ def main():
 
     test = SecureUdp(100, 4, ip, port)
 
-    t = threading.Thread(target=test.dummyReceive, args=(test,))
+    t = threading.Thread(target=test.receiveThread, args=(test,))
     t.start()
 
     pack= b'hola'
