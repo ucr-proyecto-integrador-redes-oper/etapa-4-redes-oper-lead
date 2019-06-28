@@ -41,12 +41,12 @@ class SecureUdp:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
         self.sock.bind((ip, port))
         ##Creates the Threads
-        send = threading.Thread(target=self.dummysendThread, args=())
+        send = threading.Thread(target=self.sendThread, args=())
         send.start()
 
         ##Creates the Threads
-        recive = threading.Thread(target=self.dummyReceive, args=())
-        recive.start()
+        receive = threading.Thread(target=self.receiveThread(), args=())
+        receive.start()
 
     '''
         EFE: Checkea el campo de tiempo a ver si ya está en timeout
@@ -98,7 +98,7 @@ class SecureUdp:
                     # self.SNRN = self.SNRN + 1
                     self.SNRN = self.nextSNRN(self.SNRN)
 
-            self.checkTimeStamps()
+            self.checkTimeOuts()
 
     def sendto(self, payload, ip, port):
         self.waiting_queue.append((ip, port, payload))
@@ -138,18 +138,16 @@ class SecureUdp:
 
 
 def main():
-    ip = input("My ip ")
-    port = input("My port ")
-    ip2 = input("other ip ")
-    port2 = input("other port ")
+    ip = str(input("Target ip "))
+    port = int(input("Target port "))
 
-    test = SecureUdp(100, 4, ip, port)
+    test = SecureUdp(100, 4, "10.232.250.41", 9999)
 
     t = threading.Thread(target=test.receiveThread, args=(test,))
     t.start()
 
     pack= b'hola'
-    test.sendto(pack,ip,int(port2))
+    test.sendto(pack,ip,int(port))
 
 
 if __name__ == "__main__":
