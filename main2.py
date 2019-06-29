@@ -1,6 +1,6 @@
 from USL import USL
 
-ip = "10.232.250.41"
+ip = "192.168.0.14"
 port = 8001
 usl = USL(ip, port, 5)
 usl.run()

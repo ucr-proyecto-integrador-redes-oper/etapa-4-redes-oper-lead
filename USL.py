@@ -51,19 +51,22 @@ class USL:
             payload, address = self.sock.recvfrom(1035)
             aux = uslPaq()
             paquete = aux.unserialize(payload)
-            print("recibí el paquete", paquete.payload, " con sn ", paquete.sn, " ")
             print("Mensaje de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
                   "Proveniente de:", address[1])
             if paquete.tipo == 0: # paquete de solicitud
                 client_ip = address[0] # ip
                 client_port = address[1] # puerto
                 paquete = uslPaq(1, paquete.sn, payload, client_ip, client_port)
-                self.cola_enviar.append(paquete)
+                ack = paquete.serialize()
+                #self.cola_enviar.append(paquete)
+                self.sock.sendto(ack, address)
                 self.cola_recibir.append((payload,address))
-            else: # si es un ACK
+            elif paquete.tipo == 1: # si es un ACK
                 for package in self.cola_enviar:
                     if package.sn == paquete.sn:
                         self.cola_enviar.remove(package)
+            else:
+                print("se recibió un paquete de tipo erroneo")
 
     def recibir(self):
         while True:
@@ -99,6 +102,7 @@ class USL:
                 ip = package.ip
                 port = package.port
                 self.sock.sendto(paquete, (ip, port))
-
+                if package.tipo == 1:
+                    self.cola_enviar.remove(package)
 
 #print("mensaje enviado")
