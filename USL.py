@@ -28,6 +28,7 @@ class USL:
         self.cola_recibir = []
         self.SNRN = rand.randrange(32768)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.semaphore = threading.Semaphore(0)
 
         # self.blueGraphDir = blueGraphDir
 
@@ -39,11 +40,12 @@ class USL:
         t = threading.Thread(target=self.manageTimeOuts)
         t.start()
         print("inicio de timeouts para enviar logrado.")
-	
         t2 = threading.Thread(target=self.HiloRecibidor)
         t2.start()
         print("inicio de hilo para recibir logrado.")
-
+        t3 = threading.Thread(target=self.HiloEnviador)
+        t3.start()
+        print("inicio de hilo para enviar logrado")
 
     def HiloRecibidor(self):
         while True:
@@ -51,8 +53,8 @@ class USL:
             payload, address = self.sock.recvfrom(1035)
             aux = uslPaq()
             paquete = aux.unserialize(payload)
-            print("Mensaje de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
-                  "Proveniente de:", address[1])
+            #print("Mensaje de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
+            #     "Proveniente de:", address[1])
             if paquete.tipo == 0: # paquete de solicitud
                 client_ip = address[0] # ip
                 client_port = address[1] # puerto
@@ -71,15 +73,16 @@ class USL:
     def recibir(self):
         while True:
             if len(self.cola_recibir) > 0:
-                self.cola_recibir.pop(0) #saca el primer elemento a recibir
-                break;
+                return self.cola_recibir.pop(0) #saca el primer elemento a recibir
+
 
     def manageTimeOuts(self):
         print("entré a manageTimeOuts()")
         while True:
             #print("Time stamp: ", self.timeStamp - time.time() )
             if time.time() - self.timeStamp > self.TIMEOUT:
-                self.HiloEnviador()
+                #self.HiloEnviador()
+                self.semaphore.release()
                 self.timeStamp = time.time()
                 print("inicio un nuevo timeOut")
 
@@ -88,12 +91,13 @@ class USL:
         return next
 
     def send(self, payload, ip, port):
-        print("entré a send: enviando paquete: ", payload, " a la ip: ", ip, " por el puerto: ", str(port))
+        #print("entré a send: enviando paquete: ", payload, " a la ip: ", ip, " por el puerto: ", str(port))
         paquete = uslPaq(0, self.SNRN, payload, ip, port)
         self.SNRN = self.nextSNRN(self.SNRN)
         self.cola_enviar.append(paquete)
 
     def HiloEnviador(self):
+        self.semaphore.acquire()
         print("La cola a enviar tiene longitud: ",  len(self.cola_enviar))
         if len(self.cola_enviar) > 0:
             for package in self.cola_enviar: # package: uslPaq
