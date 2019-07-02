@@ -16,7 +16,7 @@ class uslPaq:
         paquete = struct.pack('!bH', self.tipo, self.sn)
 
         if self.tipo == 0:
-            paquete = paquete + pickle.dumps(self.payload)
+            paquete = paquete + str(self.payload).encode(encoding=("ascii"), errors=("replace"))
 
         return paquete
 

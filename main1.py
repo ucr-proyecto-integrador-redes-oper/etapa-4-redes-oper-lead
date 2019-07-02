@@ -1,9 +1,9 @@
 from USL import USL
 
-my_ip = "10.232.240.55"
+my_ip = "10.1.137.29"
 my_port = 8000
 client_ip = input("Client IP: ")
-client_port = input("Client Port: ")
+client_port = int(input("Client Port: "))
 usl = USL(my_ip, my_port, 5)
 usl.run()
 
