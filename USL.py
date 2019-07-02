@@ -11,9 +11,6 @@ try:
 except ImportError:
     import Queue as queue
 
-
-# Protocolo Azul Azul
-
 # protocolo USL
 
 
@@ -26,7 +23,7 @@ class USL:
         self.TIMEOUT = timeout
         self.cola_enviar = []
         self.cola_recibir = []
-        self.SNRN = rand.randrange(32768)
+        self.SNRN = rand.randrange(65536)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.semaphore = threading.Semaphore(0)
 
@@ -82,12 +79,13 @@ class USL:
             #print("Time stamp: ", self.timeStamp - time.time() )
             if time.time() - self.timeStamp > self.TIMEOUT:
                 #self.HiloEnviador()
-                self.semaphore.release()
+                if len(self.cola_enviar) > 0:
+                    self.semaphore.release()
                 self.timeStamp = time.time()
                 print("inicio un nuevo timeOut")
 
     def nextSNRN(self, SNRN):
-        next = (SNRN + 1) % 32768
+        next = (SNRN + 1) % 65536
         return next
 
     def send(self, payload, ip, port):

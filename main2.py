@@ -1,8 +1,8 @@
 from USL import USL
 
-ip = "192.168.0.14"
-port = 8001
-usl = USL(ip, port, 5)
+my_ip = "10.232.240.55"
+my_port = 8001
+usl = USL(my_ip, my_port, 5)
 usl.run()
 print("entré a run y salí")
 while True:
