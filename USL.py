@@ -51,7 +51,7 @@ class USL:
             aux = uslPaq()
             paquete = aux.unserialize(payload)
             print("Mensaje Recibido de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
-                 "Proveniente de:", address[1])
+                 "Proveniente de:", address)
             if paquete.tipo == 0: # paquete de solicitud
                 client_ip = address[0] # ip
                 client_port = address[1] # puerto
@@ -64,6 +64,7 @@ class USL:
                 for package in self.cola_enviar:
                     if package.sn == paquete.sn:
                         self.cola_enviar.remove(package)
+                        print(len(self.cola_enviar))
             else:
                 print("se recibió un paquete de tipo erroneo")
 
@@ -78,33 +79,34 @@ class USL:
         while True:
             #print("Time stamp: ", self.timeStamp - time.time() )
             if time.time() - self.timeStamp > self.TIMEOUT:
-                #self.HiloEnviador()
+                #print("TAMAÑO DE LA COLA A ENVIAR: ", len(self.cola_enviar))
                 if len(self.cola_enviar) > 0:
                     self.semaphore.release()
                 self.timeStamp = time.time()
-                print("inicio un nuevo timeOut")
+                #print("inicio un nuevo timeOut")
 
     def nextSNRN(self, SNRN):
         next = (SNRN + 1) % 65536
         return next
 
     def send(self, payload, ip, port):
-        #print("entré a send: enviando paquete: ", payload, " a la ip: ", ip, " por el puerto: ", str(port))
+        print("entré a send: enviando paquete: ", payload, " a la ip: ", ip, " por el puerto: ", str(port))
         paquete = uslPaq(0, self.SNRN, payload, ip, port)
         self.SNRN = self.nextSNRN(self.SNRN)
         self.cola_enviar.append(paquete)
 
     def HiloEnviador(self):
-        self.semaphore.acquire()
-        print("La cola a enviar tiene longitud: ",  len(self.cola_enviar))
-        if len(self.cola_enviar) > 0:
-            for package in self.cola_enviar: # package: uslPaq
-                paquete = package.serialize()
-                print(f"{package.ip} , {package.port}")
-                ip = package.ip
-                port = package.port
-                self.sock.sendto(paquete, (ip, port))
-                if package.tipo == 1:
-                    self.cola_enviar.remove(package)
+        while True:
+            self.semaphore.acquire()
+            #print("La cola a enviar tiene longitud: ",  len(self.cola_enviar))
+            if len(self.cola_enviar) > 0:
+                for package in self.cola_enviar: # package: uslPaq
+                    paquete = package.serialize()
+                    print(f"{package.ip} , {package.port}")
+                    ip = package.ip
+                    port = package.port
+                    self.sock.sendto(paquete, (ip, port))
+                    if package.tipo == 1:
+                        self.cola_enviar.remove(package)
 
 #print("mensaje enviado")
