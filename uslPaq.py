@@ -15,7 +15,8 @@ class uslPaq:
     def serialize(self):
         paquete = struct.pack('bh', self.tipo, self.sn)
 
-        paquete = paquete + pickle.dumps(self.payload)
+        if self.tipo == 0:
+            paquete = paquete + pickle.dumps(self.payload)
 
         return paquete
 
@@ -24,8 +25,9 @@ class uslPaq:
 
         self.tipo = paquete[0]
         self.sn = paquete[1]
-        self.payload = list(pickle.loads(byteP[4:]))
-
+        if self.tipo == 0:
+            self.payload = list(pickle.loads(byteP[4:]))
+        print(paquete)
         return self
 
     def imprimir(self):

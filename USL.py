@@ -53,8 +53,8 @@ class USL:
             payload, address = self.sock.recvfrom(1035)
             aux = uslPaq()
             paquete = aux.unserialize(payload)
-            #print("Mensaje de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
-            #     "Proveniente de:", address[1])
+            print("Mensaje Recibido de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
+                 "Proveniente de:", address[1])
             if paquete.tipo == 0: # paquete de solicitud
                 client_ip = address[0] # ip
                 client_port = address[1] # puerto

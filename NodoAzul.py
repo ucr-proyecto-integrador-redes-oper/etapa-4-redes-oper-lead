@@ -5,7 +5,7 @@ from threading import Lock, Thread
 import time
 import threading
 import sys
-
+from USL import USL
 
 class nodo_azul:
 
@@ -14,6 +14,8 @@ class nodo_azul:
         self.puerto = puerto
         self.puerto_naranja = puerto_naranja
         self.ip_naranja = ip_naranja
+        self.file_ID = 0
+        self.chunk_ID = 0
         self.lista_vecinos = []  # Vecinos azules del nodo azul
         self.lista_mensajes_enviados = []  # Control de mensajes enviados
         self.lock_lista_mensajes_enviados = Lock()
@@ -25,6 +27,7 @@ class nodo_azul:
         self.nombre_nodo = ' '
         self.mensajes_procesar = []
         self.lock_mensajes_procesar = Lock()
+        self.secure_udp = USL('0.0.0.0', 8888, 5) # My ip, my port, my timeout
 
     ###### COMUNICACION CON EL NARANJA	######
 
@@ -33,12 +36,13 @@ class nodo_azul:
         # Se manda por UDP
         paquete = (14).to_bytes(1, byteorder='big')
         # self.enviar(paquete, self.ip_naranja, self.puerto_naranja)
-        self.mi_socket.sendto(paquete, (ip_naranja, puerto_naranja))
+        # self.mi_socket.sendto(paquete, (self.ip_naranja, self.puerto_naranja))
+        self.secure_udp.send(paquete, self.ip_naranja, self.puerto_naranja)
 
     def recibir_respuesta_peticion(self):
         # Se espera respuestas del nodo Naranja, una por cada vecino
         grafo_completo = False
-        while grafo_completo == False:
+        while not grafo_completo:
             self.lock_mensajes_procesar.acquire()
             if len(self.mensajes_procesar) != 0:
                 paquete = self.mensajes_procesar.pop(0)
@@ -48,7 +52,6 @@ class nodo_azul:
                 if tipo_respuesta == 15:  # Si es de tipo 15 no viene ni el ip ni el puerto
                     if self.nombre_nodo == ' ':
                         self.nombre_nodo = [paquete[0][4], paquete[0][5]].decode()
-                        e
                     mi_vecino = [paquete[0][6], paquete[0][7]].decode()
                     direccion_momentanea = ('0', 0)
                     self.lista_vecinos.append((mi_vecino, direccion_momentanea))
@@ -64,7 +67,7 @@ class nodo_azul:
                     puerto_vecino = int.from_bytes([paquete[0][12], paquete[0][13]], byteorder='big')
                     direccion_vecino = (ip_vecino, puerto_vecino)
                     nuevo_vecino = True
-                    for vecino in lista_vecinos:
+                    for vecino in self.lista_vecinos:
                         if vecino[0] == mi_vecino:
                             nuevo_vecino = False
                             vecino[1] = direccion_vecino
@@ -89,10 +92,13 @@ class nodo_azul:
             print("Digito algo que no es una D")
             self.morir()
 
-    ###### COMUNICACION CON OTROS AZULES	######
+    ###### COMUNICACION CON OTROS AZULES ######
 
     def hello(self):
         # Envia un paquete al vecino con una H y el numero de nodo
+        # payload para put chunk = struct.pack('bh', '''tipo''', '''file_ID''', '''chunk_ID''', '''chunk object''')
+        payload = struct.pack('bh', '''message type''', '''nodeID''')
+        #
         print("Hola! Soy el nodo # X")
 
     def clonar_chunk(self, paquete_chunk):
@@ -144,8 +150,7 @@ class nodo_azul:
                 self.lock_mensajes_procesar.acquire()
                 paquete = self.mensajes_procesar.pop(0)  # Saca el primer paquete
                 self.lock_mensajes_procesar.release()
-                tipo_paquete = int.from_bytes([paquete[0][3]],
-                                              byteorder='big')  # Paquetes con la forma 0 (Datos UDP) -  SN - SN - TIPO
+                tipo_paquete = int.from_bytes([paquete[0][3]], byteorder='big')  # Paquetes con la forma 0 (Datos UDP) -  SN - SN - TIPO
                 # "Switch de tipo de paquete"
                 if tipo_paquete == 0:
                     print("Es un paquete put chunk")
