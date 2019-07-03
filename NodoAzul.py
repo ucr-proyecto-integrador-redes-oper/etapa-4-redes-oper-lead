@@ -181,7 +181,7 @@ def main():
     ip = input("Digite la ip del nodo azul: ")
     puerto = int(input("Digite el puerto que utilizara para comunicarse: "))
     azul = nodo_azul(ip, puerto, '192.168.205.129', 10000)
-    thread_exit = threading.Thread(target=azul.morir)
+    thread_exit = threading.Thread(target = azul.morir)
     thread_exit.start()
     # Tiene que haber hilo que corra preguntando si quiere matarlo por consola
     # Primero el azul ocupa la informacion de sus vecinos
@@ -195,9 +195,6 @@ def main():
     # azul.enviar(a, '192.168.205.129', 10000)
     # thread_revisar_mensajes = threading.Thread(target = azul.revisar_mensajes_recibidos)
     # thread_revisar_mensajes.start()
-
-    thread_timer = threading.Thread(target=azul.timeout)
-    thread_timer.start()
 
 
 if __name__ == "__main__":
