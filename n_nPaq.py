@@ -17,8 +17,7 @@ class n_nPaq:
 
     def serialize(self):
         paquete = struct.pack('bIbbch15phI', self.categoria, self.sn, self.origenNaranja, self.destinoNaranja,
-                              self.tipo.encode(),
-                              self.posGrafo, self.ipAzul.encode(), self.puertoAzul, self.prioridad)
+                              self.tipo.encode(), self.posGrafo, self.ipAzul.encode(), self.puertoAzul, self.prioridad)
         return paquete
 
     def unserialize(self, byteP):
