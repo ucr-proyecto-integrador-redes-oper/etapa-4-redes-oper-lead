@@ -3,6 +3,7 @@ import threading
 import struct
 from USL import USL
 from netifaces import interfaces, ifaddresses, AF_INET
+from USL import USL
 
 try:
     import queue
@@ -20,6 +21,7 @@ class NodoVerde:
         self.colaEntrada = queue.Queue()
         self.colaSalida = queue.Queue()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.secure_udp = USL(self.ip, self.puerto, 5)
 
     def run(self):
         server = (self.ip, self.port)
@@ -38,10 +40,26 @@ class NodoVerde:
         t3 = threading.Thread(target=self.HiloLogico)
         t3.start()
         print("hilo logico iniciado")
+        ##Hilo recibidor de cliente
+        t4 = threading.Thread(target=self.RecibirCliente)
+        t4.start()
+        print("hilo recibir de cliente iniciado")
 
-    def HiloRecibidor(self):
+	def RecibirCliente(self):
         while True:
             payload, client_address = self.sock.recvfrom(1035)  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
+            tipo = int.from_bytes(payload[0:1], byteorder=('little'))
+            if tipo == 0:
+                # caso Depositar
+                
+            if tipo == 1:
+                # caso Existe
+                
+            sock.sendto(paquete, client_address)
+		
+    def HiloRecibidor(self):
+        while True:
+			payload , address = self.secure_udp.recibir()
             tipo = int.from_bytes(payload[0:1], byteorder=('little'))
             if tipo == 0:
                 # caso PUT
@@ -53,16 +71,12 @@ class NodoVerde:
         while True:
             #Saca paquete de la cola; espera si cola esta vacia
             bytePacket = self.colaSalida.get()
-            tipo = int.from_bytes(payload[0:1], byteorder=('little'))
-            if(tipo < 20): #es para el nodo azul
-				address = (self.ip_azul, self.puerto_azul)
-				try:
-					#manda al nodo azul
-					self.sock.sendto(bytePacket, address)
-				except OSError as err:
-					print("Failed on addressing: ", err)
-			else: #es para el cliente liviano
-				#extraer ip y puerto de bytePacket y enviar
+			address = (self.ip_azul, self.puerto_azul)
+			try:
+				#manda al nodo azul
+				self.sock.sendto(bytePacket, address)
+			except OSError as err:
+				print("Failed on addressing: ", err)
 
     def HiloLogico(self):
 		
