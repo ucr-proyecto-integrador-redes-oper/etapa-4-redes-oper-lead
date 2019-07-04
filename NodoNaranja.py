@@ -7,6 +7,7 @@ from TablaNodosAzules import TablaNodosAzules
 from n_nPaq import n_nPaq
 from n_aPaq import n_aPaq
 from USL import USL
+from netifaces import interfaces, ifaddresses, AF_INET
 
 try:
     import queue
@@ -17,8 +18,8 @@ except ImportError:
 class NodoNaranja:
 
 	# Aqui se ponen los detalles para ajusta puerto y IP
-	def __init__(self, ip, port, nodeID, routingTableDir):
-		self.ip = ip
+	def __init__(self, port, nodeID, routingTableDir):
+		self.ip = ifaddresses(interfaces()[2])[AF_INET].pop(0)['addr']
 		self.port = port
 		self.nodeID = nodeID
 		self.routingTable = RoutingTable(routingTableDir)
