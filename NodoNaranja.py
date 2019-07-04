@@ -1,6 +1,7 @@
 import socket
 import threading
 import struct
+import random
 from RoutingTable import RoutingTable
 from TablaNodosAzules import TablaNodosAzules
 from n_nPaq import n_nPaq
@@ -17,6 +18,7 @@ class NodoNaranja:
 
     # Aqui se ponen los detalles para ajusta puerto y IP
     def __init__(self, port, nodeID, routingTableDir):
+        rand = random
         self.ip = ifaddresses(interfaces()[2])[AF_INET].pop(0)['addr']
         self.port = port
         self.nodeID = nodeID
@@ -25,6 +27,11 @@ class NodoNaranja:
         self.colaSalida = queue.Queue()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dirGrafoAzul = "Grafo_Referencia.csv"
+        self.SNRN = rand.randrange(65536)
+
+    def nextSNRN(self, SNRN):
+        next = (SNRN + 1) % 65536
+        return next
 
     def run(self):
         server = (self.ip, self.port)
@@ -44,12 +51,11 @@ class NodoNaranja:
         # print("Luego de la serialización")
         # colaEntrada.put(paqtest)
 
-        # test = n_nPaq(0, 145, 3, 6, 'a', 350, '01.02.03.04', 5050,
-        # 500)  # mete de un solo en cola de entrada
-        # print("Serializando el paquete de prueba")
-        # paqtest = test.serialize()
-        # print("Luego de la serialización")
-        # colaEntrada.put(paqtest)
+        test = n_nPaq(0, 145, 3, 6, 'r', 350, '01.02.03.04', 5050, 500)  # mete de un solo en cola de entrada
+        print("Serializando el paquete de prueba")
+        paqtest = test.serialize()
+        print("Luego de la serialización")
+        self.colaEntrada.put(paqtest)
 
         # test.unserialize(paqtest)
         #############################################################################
@@ -125,10 +131,9 @@ class NodoNaranja:
         puertoAzul = 8888
         posGrafo = 0
         ipAzul = "0.0.0.0"
-        nodoSolicitado = -1
-        prioridad = 0
+        nodoSolicitado = 350
+        prioridad = 500
 
-        sn = self.nodeID
         acks = []
         acks_done = False
         acks_Write = []
@@ -137,119 +142,120 @@ class NodoNaranja:
         MAX_NODOS_NARANJA = 6
 
         while True:
-            print("Entra al while True y espera en cola")
-            packet = self.colaEntrada.get()
-            print("Paquete obtenido en hilo logico")
-            if int.from_bytes(packet[:1], byteorder='little') == 0:
-                print("el paquete es naranja-naranja")
-                package = n_nPaq(0, self.nodeID, self.nodeID, self.nodeID, '', 0, "0.0.0.0", 5000, 0)
-                package.unserialize(packet)
-                print(package.categoria, package.sn, package.origenNaranja, package.destinoNaranja, package.puertoAzul,
-                      package.ipAzul, str(package.tipo), package.posGrafo, package.prioridad)
-                if package.tipo == b'r':  # Request de un pquete (solicitud)
-                    print("Packet request from: ", package.origenNaranja, " pidiendo el numero: ", package.posGrafo,
-                          " con la prioridad: ", package.prioridad)
-                    if package.posGrafo == nodoSolicitado:  # yo pedi ese mismo nodo y por tanto hay conflicto
-                        if package.prioridad < prioridad:  # yo gano el conflicto
-                            print("Gané la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
-                                  " Mi prioridad: ",
-                                  prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
-                                  package.prioridad, ")")
-                            negacion = n_nPaq(0, sn, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul,
-                                              puertoAzul,
-                                              prioridad)
-
-                            negacion_bytes = negacion.serialize()
-
-                            self.colaSalida.put(negacion_bytes)
-                        elif package.prioridad > prioridad:  # yo pierdo el conflicto
-                            print("Perdí la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
-                                  " Mi prioridad: ",
-                                  prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
-                                  package.prioridad, ")")
-                            accept = n_nPaq(0, sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul,
-                                            puertoAzul,
-                                            prioridad)
-
-                            accept_bytes = accept.serialize()
-
-                            self.colaSalida.put(accept_bytes)
-                        else:  # empatamos con prioridad
-                            print("Empatamos la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
-                                  " Mi prioridad: ",
-                                  prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
-                                  package.prioridad, ")")
-
-                            if (self.nodeID > package.origenNaranja):  # lo resolvemos con ip y gano
+            #print("Entra al while True y espera en cola")
+            if not self.colaEntrada.empty():
+                packet = self.colaEntrada.get()
+                print("Paquete obtenido en hilo logico")
+                if int.from_bytes(packet[:1], byteorder='little') == 0:
+                    print("el paquete es naranja-naranja")
+                    package = n_nPaq(0, self.nodeID, self.nodeID, self.nodeID, '', 0, "0.0.0.0", 5000, 0)
+                    package = package.unserialize(packet)
+                    print(package.categoria, package.sn, package.origenNaranja, package.destinoNaranja, package.puertoAzul,
+                          package.ipAzul, str(package.tipo), package.posGrafo, package.prioridad)
+                    if package.tipo == b'r':  # Request de un pquete (solicitud)
+                        print("Packet request from: ", package.origenNaranja, " pidiendo el numero: ", package.posGrafo,
+                              " con la prioridad: ", package.prioridad)
+                        if package.posGrafo == nodoSolicitado:  # yo pedi ese mismo nodo y por tanto hay conflicto
+                            if package.prioridad < prioridad:  # yo gano el conflicto
                                 print("Gané la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
                                       " Mi prioridad: ",
-                                      prioridad, ") (La ID del otro: ", package.origenNaranja,
-                                      " La prioridad del otro: ",
+                                      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
                                       package.prioridad, ")")
-                                negacion = n_nPaq(0, sn, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul,
+                                negacion = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul,
                                                   puertoAzul,
                                                   prioridad)
 
                                 negacion_bytes = negacion.serialize()
 
                                 self.colaSalida.put(negacion_bytes)
-
-                            else:  # perdí por ip
+                            elif package.prioridad > prioridad:  # yo pierdo el conflicto
                                 print("Perdí la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
                                       " Mi prioridad: ",
-                                      prioridad, ") (La ID del otro: ", package.origenNaranja,
-                                      " La prioridad del otro: ",
+                                      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
                                       package.prioridad, ")")
-                                accept = n_nPaq(0, sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul,
-                                                puertoAzul,
-                                                prioridad)
+                                accept = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul,
+                                                    puertoAzul,
+                                                    prioridad)
 
                                 accept_bytes = accept.serialize()
 
                                 self.colaSalida.put(accept_bytes)
-                    else:  # yo no pedí ese nodo
-                        print("No hay shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
-                              " Mi prioridad: ",
-                              prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
-                              package.prioridad, ")")
-                        accept = n_nPaq(0, sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul,
-                                        prioridad)
+                            else:  # empatamos con prioridad
+                                print("Empatamos la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
+                                      " Mi prioridad: ",
+                                      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
+                                      package.prioridad, ")")
 
-                        accept_bytes = accept.serialize()
+                                if self.nodeID > package.origenNaranja:  # lo resolvemos con ip y gano
+                                    print("Gané la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
+                                          " Mi prioridad: ",
+                                          prioridad, ") (La ID del otro: ", package.origenNaranja,
+                                          " La prioridad del otro: ",
+                                          package.prioridad, ")")
+                                    negacion = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul,
+                                                      puertoAzul,
+                                                      prioridad)
 
-                        self.colaSalida.put(accept_bytes)
-                elif package.tipo == b'd':
-                    print("Recibi un decline por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
-                          nodoSolicitado, " De parte del nodo azul: ", ipAzul)
+                                    negacion_bytes = negacion.serialize()
 
-                    acks.append('d')
-                # esto significa que perdí el paquete por lo que tengo que detener la espera de acks.
+                                    self.colaSalida.put(negacion_bytes)
 
-                elif package.tipo == b'a':
-                    print("Recibi un accept por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
-                          nodoSolicitado, " De parte del nodo azul: ", ipAzul)
-                    acks.append('a')
+                                else:  # perdí por ip
+                                    print("Perdí la shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
+                                          " Mi prioridad: ",
+                                          prioridad, ") (La ID del otro: ", package.origenNaranja,
+                                          " La prioridad del otro: ",
+                                          package.prioridad, ")")
+                                    accept = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul,
+                                                    puertoAzul,
+                                                    prioridad)
 
-                    if len(acks) == MAX_NODOS_NARANJA - 1:
-                        acks_done = True
-                        print("recibi todos los acks de la petición: ", nodoSolicitado)
-                elif package.tipo == b'w':
-                    print("Recibi un Write de parte del nodo naranja: ", package.origenNaranja, " Sobre el nodo: ",
-                          package.posGrafo)
+                                    accept_bytes = accept.serialize()
 
-                    direccion = (package.ipAzul, package.puertoAzul)
-                    tabla.write(package, direccion)
+                                    self.colaSalida.put(accept_bytes)
+                        else:  # yo no pedí ese nodo
+                            print("No hay shokugeki por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
+                                  " Mi prioridad: ",
+                                  prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
+                                  package.prioridad, ")")
+                            accept = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul,
+                                            prioridad)
 
-                # write_ack = n_nPaq(0, sn, nodeID, package.origenNaranja, 's', posGrafo, ipAzul, puertoAzul, prioridad)
-                # por definirse, mas los acks seguramente iran por secure UDP.
-                elif package == 'g':  # Go package, por definirse. # cuerpo del go package.
-                    print("Recibi un Go package de parte del nodo naranja: ", package.origenNaranja)
-            else:  # el paquete es naranja-azul # cuerpo del naranja-azul
-                print("Comunicación naranja-azul")
+                            accept_bytes = accept.serialize()
 
-            if acks_done == True:
-                for node in range(0, MAX_NODOS_NARANJA):
-                    write_package = n_nPaq(0, sn, self.nodeID, node, 'w', posGrafo, ipAzul, puertoAzul, prioridad)
-                    write_package.imprimir()
-                    bytes_write = write_package.serialize()
-                    self.colaSalida.put(bytes_write)
+                            self.colaSalida.put(accept_bytes)
+                    elif package.tipo == b'd':
+                        print("Recibi un decline por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
+                              nodoSolicitado, " De parte del nodo azul: ", ipAzul)
+
+                        acks.append('d')
+                    # esto significa que perdí el paquete por lo que tengo que detener la espera de acks.
+
+                    elif package.tipo == b'a':
+                        print("Recibi un accept por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
+                              nodoSolicitado, " De parte del nodo azul: ", ipAzul)
+                        acks.append('a')
+
+                        if len(acks) == MAX_NODOS_NARANJA - 1:
+                            acks_done = True
+                            print("recibi todos los acks de la petición: ", nodoSolicitado)
+                    elif package.tipo == b'w':
+                        print("Recibi un Write de parte del nodo naranja: ", package.origenNaranja, " Sobre el nodo: ",
+                              package.posGrafo)
+
+                        direccion = (package.ipAzul, package.puertoAzul)
+                        tabla.write(package, direccion)
+
+                    # write_ack = n_nPaq(0, sn, nodeID, package.origenNaranja, 's', posGrafo, ipAzul, puertoAzul, prioridad)
+                    # por definirse, mas los acks seguramente iran por secure UDP.
+                    elif package == 'g':  # Go package, por definirse. # cuerpo del go package.
+                        print("Recibi un Go package de parte del nodo naranja: ", package.origenNaranja)
+                else:  # el paquete es naranja-azul # cuerpo del naranja-azul
+                    print("Comunicación naranja-azul")
+
+                if acks_done == True:
+                    for node in range(0, MAX_NODOS_NARANJA):
+                        write_package = n_nPaq(0, self.SNRN, self.nodeID, node, 'w', posGrafo, ipAzul, puertoAzul, prioridad)
+                        write_package.imprimir()
+                        bytes_write = write_package.serialize()
+                        self.colaSalida.put(bytes_write)
