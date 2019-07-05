@@ -36,6 +36,7 @@ class NodoNaranja:
         self.colaSalida = queue.Queue()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dirGrafoAzul = "Grafo_Referencia.csv"
+        self.diccionariosACKs = {} # { SNRN_1:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_2:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_N:{1:'', 2:'', 3:'', 4:'', 5:''}}
         self.SNRN = rand.randrange(65536)
 
     def nextSNRN(self, SNRN):
@@ -143,10 +144,11 @@ class NodoNaranja:
         nodoSolicitado = 350
         prioridad = 500
 
-        acks = []
+        acks = {} # diccionario para acks que utiliza el ID del nodo naranja para ver en si está ack'd o no. Esto se debe apendizar con el SNRN del paquete de solicitud como llave al self.diccionariosACKs
         acks_done = False
-        acks_Write = []
-        acks_Write_Done = False
+        ganeNodo = False
+        # acks_Write = []
+        # acks_Write_Done = False
 
         MAX_NODOS_NARANJA = 6
 
@@ -247,10 +249,10 @@ class NodoNaranja:
                         print("Recibi un accept por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
                               nodoSolicitado, " De parte del nodo azul: ", ipAzul)
                         if package.posGrafo == nodoSolicitado:
-                            # agregar el ack al mapa de acks. lo voy a explicar arriba.
+                            # agrega el ack al mapa de acks. lo voy a explicar arriba.
+                            self.diccionariosACKs[package.sn][package.origenNaranja] = 'a' # del diccionario con llave = sn, en el lugar con llave origenNaranja, ponga el accept.
 
-
-                        if len(acks) == MAX_NODOS_NARANJA - 1:
+                        if len(self.diccionariosACKs[package.sn]) == MAX_NODOS_NARANJA - 1: #esto hay que cambiarlo porque creo que el diccionario siepmre va a tener 5 elementos
                             acks_done = True
                             print("recibi todos los acks de la petición: ", nodoSolicitado)
                     elif package.tipo == b'w':
@@ -267,7 +269,16 @@ class NodoNaranja:
                 else:  # el paquete es naranja-azul # cuerpo del naranja-azul
                     print("Comunicación naranja-azul")
 
-                if acks_done == True:
+                if acks_done:
+                    counter = 0
+                    for i in range(MAX_NODOS_NARANJA):
+                        if self.diccionariosACKs[package.sn][i] == 'a'
+                            ++counter
+                        if counter == MAX_NODOS_NARANJA-1:
+                            ganeNodo = True
+
+
+                if ganeNodo:
                     for node in range(0, MAX_NODOS_NARANJA):
                         write_package = n_nPaq(0, self.SNRN, self.nodeID, node, 'w', posGrafo, ipAzul, puertoAzul, prioridad)
                         write_package.imprimir()
