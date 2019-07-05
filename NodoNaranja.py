@@ -8,6 +8,15 @@ from n_nPaq import n_nPaq
 from USL import USL
 from netifaces import interfaces, ifaddresses, AF_INET
 
+# El diccionario de acks funciona así: tengo un conjunto de espacios igual a la cantidad de nodos naranja que hayan.
+# Si tengo 5 nodos naranjas entonces tengo 5 espacios en el diccionario. Las llaves son el id del nodo naranja.
+# Esto significa que si me llega un ACK de un source naranja, usando el ID del source puedo introducir en el mapa
+# Si me mando un ACK. Originalmente el diccionario va a tener una configuracion de la siguiente forma:
+# {'id':'', 'id':'', 'id':'', etc} y al final debería lucir {'id':'a', 'id':'a', 'id':'a', etc}
+# Para manejar varios azules al mismo tiempo entonces hacemos un self.diccionariosAck = {} (diccionario de diccionarios)
+# Donde el keyword del diccionario de diccionarios es el SNRN del paquete. Así con el SNRN podemos accesar a la
+# solicitud correcta y marcar como ack'ed el source para dicha petición.
+
 try:
     import queue
 except ImportError:
@@ -227,14 +236,19 @@ class NodoNaranja:
                     elif package.tipo == b'd':
                         print("Recibi un decline por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
                               nodoSolicitado, " De parte del nodo azul: ", ipAzul)
-
+                        if package.posGrafo == nodoSolicitado:
+                            ganeNodo = False
+                            nodoSolicitado = -1
                         acks.append('d')
-                    # esto significa que perdí el paquete por lo que tengo que detener la espera de acks.
+
+                        # esto significa que perdí el paquete por lo que tengo que detener la espera de acks.
 
                     elif package.tipo == b'a':
                         print("Recibi un accept por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ",
                               nodoSolicitado, " De parte del nodo azul: ", ipAzul)
-                        acks.append('a')
+                        if package.posGrafo == nodoSolicitado:
+                            # agregar el ack al mapa de acks. lo voy a explicar arriba.
+
 
                         if len(acks) == MAX_NODOS_NARANJA - 1:
                             acks_done = True
