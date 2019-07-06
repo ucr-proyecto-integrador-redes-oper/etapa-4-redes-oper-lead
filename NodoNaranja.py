@@ -1,10 +1,10 @@
 import socket
 import threading
-import struct
 import random
 from RoutingTable import RoutingTable
 from TablaNodosAzules import TablaNodosAzules
 from n_nPaq import n_nPaq
+from n_aPaq import n_aPaq
 from USL import USL
 from netifaces import interfaces, ifaddresses, AF_INET
 
@@ -26,11 +26,9 @@ except ImportError:
 class NodoNaranja:
 
     # Aqui se ponen los detalles para ajusta puerto y IP
-    def __init__(self, port, nodeID, routingTableDir):
+    def __init__(self, routingTableDir):
         rand = random
         self.ip = ifaddresses(interfaces()[2])[AF_INET].pop(0)['addr']
-        self.port = port
-        self.nodeID = nodeID
         self.routingTable = RoutingTable(routingTableDir)
         self.colaEntrada = queue.Queue()
         self.colaSalida = queue.Queue()
@@ -38,12 +36,21 @@ class NodoNaranja:
         self.dirGrafoAzul = "Grafo_Referencia.csv"
         self.diccionariosACKs = {} # { SNRN_1:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_2:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_N:{1:'', 2:'', 3:'', 4:'', 5:''}}
         self.SNRN = rand.randrange(65536)
+        self.secure_UDP = USL
+        self.port = 0000
+        self.nodeID = 0
 
     def nextSNRN(self, SNRN):
         next = (SNRN + 1) % 65536
         return next
 
     def run(self):
+
+        for i in self.routingTable.table:
+            if i.getIp() == self.ip:
+                print(i.print_data())
+                self.nodeID = i.getNode()
+                self.port = i.getPort()
         server = (self.ip, self.port)
         # Creates the routingtable
         # listaVecinos[]
@@ -51,7 +58,7 @@ class NodoNaranja:
         self.sock.bind(server)
         print("Escuchando: " + self.ip + ":" + str(self.port))
 
-        #################################################################################pruebas
+        ################################################################################# pruebas
         # (categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
         # r:request,a:accept,w:write,d:decline,g:go
         # for i in range(0,10):
@@ -61,7 +68,8 @@ class NodoNaranja:
         # print("Luego de la serialización")
         # colaEntrada.put(paqtest)
 
-        test = n_nPaq(0, 145, 3, 6, 'r', 350, '01.02.03.04', 5050, 500)  # mete de un solo en cola de entrada
+        #test = n_nPaq(0, 145, 3, 6, 'r', 350, '01.02.03.04', 5050, 500)  # mete de un solo en cola de entrada
+        test = n_aPaq(1, 145, 14, 0, '192.168.1.13', 7777, [0,0,0,0])
         print("Serializando el paquete de prueba")
         paqtest = test.serialize()
         print("Luego de la serialización")
@@ -77,7 +85,7 @@ class NodoNaranja:
         # print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
 
         ##Hilos recibidor
-        t = threading.Thread(target=self.HiloRecibidor)
+        t = threading.Thread(target=self.HiloRecibidorNaranja)
         t.start()
         print("hilo recibidor iniciado")
         # hilo enviador
@@ -89,10 +97,10 @@ class NodoNaranja:
         t3.start()
         print("hilo logico iniciado")
 
-    def HiloRecibidor(self):
+    def HiloRecibidorNaranja(self):
         while True:
             payload, client_address = self.sock.recvfrom(1035)  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
-            tipo = int.from_bytes(payload[0:1], byteorder=('little'))
+            tipo = int.from_bytes(payload[:1], byteorder=('little'))
             if tipo == 0:
                 # caso 1 narnja naranja
                 targetNode = int.from_bytes(payload[9:10], byteorder=('little'))  # destino
@@ -105,8 +113,22 @@ class NodoNaranja:
                     self.colaSalida.put(payload)
                 ##narnaja azul
             #if tipo == 1:
-                # hacer azul
-            #    print("Soy de tipo: ", tipo)
+
+
+    def HiloRecibidorAzul(self):
+        while True:
+            paquete = n_aPaq()
+            payload, client_address = self.secure_UDP.recibir()
+            tipo = int.from_bytes(payload[:1], byteorder='little')
+            if tipo == 1:
+                # caso 2 naranja azul
+                paquete = paquete.unserialize(payload)
+                paquete.ipAzul = client_address[0] #para poder responderle necesito la IP
+                paquete.puertoAzul = client_address[1] #y el puerto
+                #sin embargo ambas cosas vienen con el mensaje que me mandó.
+                paquete.imprimir()
+                payload = paquete.serialize()
+                self.colaEntrada.put(payload)
 
     def HiloEnviador(self):
         while True:
@@ -149,7 +171,6 @@ class NodoNaranja:
         ganeNodo = False
         # acks_Write = []
         # acks_Write_Done = False
-
         MAX_NODOS_NARANJA = 6
 
         while True:
@@ -157,7 +178,8 @@ class NodoNaranja:
             if not self.colaEntrada.empty():
                 packet = self.colaEntrada.get()
                 print("Paquete obtenido en hilo logico")
-                if int.from_bytes(packet[:1], byteorder='little') == 0:
+                tipo = int.from_bytes(packet[:1], byteorder=('little'))
+                if tipo == 0:
                     print("el paquete es naranja-naranja")
                     package = n_nPaq(0, self.nodeID, self.nodeID, self.nodeID, '', 0, "0.0.0.0", 5000, 0)
                     package = package.unserialize(packet)
@@ -266,17 +288,36 @@ class NodoNaranja:
                     # por definirse, mas los acks seguramente iran por secure UDP.
                     elif package == 'g':  # Go package, por definirse. # cuerpo del go package.
                         print("Recibi un Go package de parte del nodo naranja: ", package.origenNaranja)
-                else:  # el paquete es naranja-azul # cuerpo del naranja-azul
+                elif tipo == 1:  # el paquete es naranja-azul # cuerpo del naranja-azul
                     print("Comunicación naranja-azul")
+                    bluePacket = n_aPaq()
+                    bluePacket = bluePacket.unserialize(packet)
+                    print("Paquete de tipo: ", bluePacket.tipo)
+                    if bluePacket.tipo == 14:
+                        # es un paquete de solicitud.
+                        ipAzul = bluePacket.ipAzul
+                        puertoAzul = bluePacket.puertoAzul
+
+                        print("Es un paquete de solicitud azul con IP: ", str(ipAzul), " y puerto: ", puertoAzul)
+
+                        bluePacket.imprimir()
+                        # procesar una solicitud:
+                        # almacenar el ip y el puerto del nodo
+                        # generar un paquete de request con el número de nodo del grafo que elegí.
+                        # hacer un broadcast con ese paquete utilizando la tabla de rutamiento
+                        # generar el diccionario de acks para este nodo.
+                        # OBS: Tengo que asignar un SN a la petición y utilizar el mismo SN para diccionariosACKs
+                        #
+
+
 
                 if acks_done:
                     counter = 0
                     for i in range(MAX_NODOS_NARANJA):
-                        if self.diccionariosACKs[package.sn][i] == 'a'
+                        if self.diccionariosACKs[package.sn][i] == 'a':
                             ++counter
                         if counter == MAX_NODOS_NARANJA-1:
                             ganeNodo = True
-
 
                 if ganeNodo:
                     for node in range(0, MAX_NODOS_NARANJA):
