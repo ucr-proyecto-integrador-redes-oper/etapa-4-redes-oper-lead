@@ -24,6 +24,9 @@ class TablaNodosAzules:
         for i in self.grafoNodosAzules[15]: # imprime los vecinos del nodo dentro del parentesis cuadrado, son ints.
             print(i)
 
+    def printNodosDisponibles(self):
+        print(self.nodosDisponibles)
+
     def marcarComoSolicitado(self, nodoSolicitado):
         self.nodosDisponibles.remove(nodoSolicitado)
 
