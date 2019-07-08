@@ -35,7 +35,7 @@ class TablaNodosAzules:
         return nodoDisponible
 
     def write(self, nodoEscribir, tuplaDirecciones):
-        self.nodosDisponibles.remove(nodoEscribir)
+        # self.nodosDisponibles.remove(nodoEscribir)
         self.nodosAzulesAddr[nodoEscribir] = tuplaDirecciones
 
     def estaAsignado(self, nodoObjetivo):
