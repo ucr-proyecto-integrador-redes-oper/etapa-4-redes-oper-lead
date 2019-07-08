@@ -35,7 +35,15 @@ class a_aPaq:
 			paquete = struct.pack('!BBHH', self.tipo, self.arg1, self.arg2, self.arg3)
 		if(self.tipo == 10):
 			paquete = struct.pack('!BBH', self.tipo, self.arg1, self.arg2)
-		
+		if(self.tipo == 11):
+			paquete = struct.pack('!BH', self.tipo, self.arg1)
+		if(self.tipo == 13):
+			paquete = struct.pack('!BH', self.tipo, self.arg1)
+		if(self.tipo == 12):
+			paquete = struct.pack('!BH', self.tipo, self.arg1)
+		if(self.tipo == 18):
+			paquete = struct.pack('!BH', self.tipo, self.arg1)
+
 		return paquete
 
 	def unserialize(self, byteP):
@@ -101,6 +109,26 @@ class a_aPaq:
 			self.tipo = paquete[0]  #tipo
 			self.arg1 = paquete[1]  # ID de nuestro verde
 			self.arg2 = paquete[2]  # ID del archivo
+		if(tipo == 11):  #JoinTree
+			paquete = struct.unpack('!BH', byteP[0:])
+			self.tipo = paquete[0]  #tipo
+			self.arg1 = paquete[1]  # ID de Nodo
+
+		if(tipo == 13):  #Tenes una bendicion
+			paquete = struct.unpack('!BH', byteP[0:])
+			self.tipo = paquete[0]  #tipo
+			self.arg1 = paquete[1]  # ID de Nodo
+
+		if(tipo == 12):  #Si soy parte del arbol
+			paquete = struct.unpack('!BH', byteP[0:])
+			self.tipo = paquete[0]  #tipo
+			self.arg1 = paquete[1]  # ID de Nodo
+
+		if(tipo == 18):  #No soy parte del arbol
+			paquete = struct.unpack('!BH', byteP[0:])
+			self.tipo = paquete[0]  #tipo
+			self.arg1 = paquete[1]  # ID de Nodo
+
 
 # ----------------------------------------------------------
 

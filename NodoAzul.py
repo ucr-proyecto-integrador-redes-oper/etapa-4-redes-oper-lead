@@ -6,7 +6,7 @@ import time
 import threading
 import sys
 from USL import USL
-
+from a_aPaq import a_aPaq
 class nodo_azul:
 
 	def __init__(self, ip, puerto, ip_naranja, puerto_naranja):
@@ -28,6 +28,7 @@ class nodo_azul:
 		self.mensajes_procesar = []
 		self.lock_mensajes_procesar = Lock()
 		self.secure_udp = USL(self.ip, self.puerto, 5) # My ip, my port, my timeout
+		self.InTree = False #define si esta o no en el arbol
 
     ###### COMUNICACION CON EL NARANJA	######
 
@@ -51,7 +52,7 @@ class nodo_azul:
 						self.id_nodo = int.from_bytes([paquete[0][4], paquete[0][5]], byteorder = 'big')
 					mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
 					direccion_momentanea = ('0' , 0)
-					self.lista_vecinos.append((mi_vecino, direccion_momentanea, False))
+					self.lista_vecinos.append((mi_vecino, direccion_momentanea, False,False))
 					
 				elif tipo_respuesta == 16: # Es de tipo 16, viene el ip y el puerto
 					if self.id_nodo == -1:
@@ -70,13 +71,24 @@ class nodo_azul:
 							nuevo_vecino = False
 							vecino[1] = direccion_vecino
 					if nuevo_vecino == True:
-						self.lista_vecinos.append((mi_vecino , direccion_vecino , False))
+						self.lista_vecinos.append((mi_vecino , direccion_vecino , False,False))
 						
 				else: # Es paquete complete
 					print("Se puede comenzar el almacenamiento")
 					grafo_completo = True
 			self.lock_mensajes_procesar.release()
 			self.mandar_hellos() # Solo entra cuando llego un paquete complete
+			if self.id_nodo == 0:#revisa si no es el nodo ROOT
+				InTree = True
+
+			while inTree == false:#intenta ingresar al arbol generador
+				joinTree()
+
+
+
+
+
+
 
 	def morir(self):
 		input_usuario = str(input("Digite D si desea matar al nodo azul: "))
@@ -103,7 +115,7 @@ class nodo_azul:
 		# Pone un true para saber que el vecino ya le mando hello
 
 	def clonar_chunk(self, paquete_chunk):
-		# Clona el paquete, guarda copia y lo pasa
+		# Clona el paquete, guarda copia y lo pasa con Round Robin
 		print("Clonando, guardando y pasando chunck")
 
 	def guardar_chunk(self, paquete_chunk):
@@ -117,6 +129,62 @@ class nodo_azul:
 	def pasar_chunk(self, paquete_chunk):
 		# Pasa el chunck
 		print("Pasando el chunkck")
+	###### ARBOL GENERADOR ######
+	def joinTree(self):
+		# revisa si vecino es parte del arbol  preguntando a sus vecinos si pertenecen
+		print("Vecino es parte de arbol?")
+		#mando mensaje preguntando a mis vecinos
+		for vecino in lista_vecinos:
+			paquete = paquete = (11).to_bytes(1, byteorder = 'big')
+			paquete += (self.id_nodo).to_bytes(2, byteorder = 'big')
+			self.secure_udp.enviar(paquete, vecino[1][0], vecino[1][1])
+			
+
+	def check_if_tree(self,paquete):
+		# reviso si pertenesco a Arbol
+		vecino = a_aPaq(0,0,0,0,0)
+		vecino.unserialize(paquete)
+		id_vecino = int (vecino.arg2)
+		
+		if(self.InTree):
+			print("Estoy en el arbol!")#envio mensaje diciendo que si tipo ido
+			for vecino in lista_vecinos:
+				if vecino[0]==id_vecino:
+					IDO = IDO = (12).to_bytes(1, byteorder = 'big')
+					IDO += (self.id_nodo).to_bytes(2, byteorder = 'big')
+					self.secure_udp.enviar(IDO, vecino[1][0], vecino[1][1])
+		else:
+			print("No Estoy en el arbol!")#envia mensaje diciendo que no TIPO idonot
+			for vecino in lista_vecinos:
+				if vecino[0]==id_vecino:
+					IDONOT = IDONOT = (18).to_bytes(1, byteorder = 'big')
+					IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
+					self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])	
+
+	def newSon(self, paquete):
+		#si recibe un mensaje tipo daddy de un vecino que no se habia unido al arbol
+		print("Ahora este nodo es hijo mio")
+		vecino = a_aPaq(0,0,0,0,0)
+		vecino.unserialize(paquete)
+		id_vecino = int (vecino.arg2)
+
+		for vecino in lista_vecinos:
+			if vecino[0] == id_vecino:
+				vecino[3] = True
+
+	def daddy(self, paquete):
+		#si un vecino es parte del arbol, elijo de menor ID y le mando un mensaje tipo daddy
+		print("Ahora este sera mi papi")
+		inTree=True
+		vecino = a_aPaq(0,0,0,0,0)
+		vecino.unserialize(paquete)
+		id_vecino = int (vecino.arg2)
+		for vecino in lista_vecinos:
+				if vecino[0]==id_vecino:
+					IDONOT = IDONOT = (13).to_bytes(1, byteorder = 'big')
+					IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
+					self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
+					vecino[3]=True
 
     ###### COMUNICACION CON VERDES	######
 
@@ -144,9 +212,21 @@ class nodo_azul:
 	def eliminar_objeto(self, objeto):
 		# Elimina los chunks del grafo
 		print("Eliminando chunks del grafo")
-        
-        
 
+
+	def switcher(self, paquete):
+	#define que hacer con un chunk
+		decision = self.rand.randrange(0, 5)
+		if decision == 1:
+			clonar_chunk(paquete)
+		elif decision == 2:
+			guardar_chunk(paquete)
+		elif decision == 3:
+			borrar_chunk(paquete)
+		else:
+			pasar_chunk(paquete)
+
+	
 	def analizar_peticiones(self):
 		while True:
 			if len(self.mensajes_procesar) != 0:
@@ -157,7 +237,9 @@ class nodo_azul:
 				tipo_paquete = int.from_bytes([paquete[0][3]], byteorder = 'big') # Paquetes con la forma 0 (Datos UDP) -  SN - SN - TIPO 
 				# "Switch" de tipo de paquete
 				if tipo_paquete == 0:
-					print("Es un paquete put chunk")
+					print("Es un paquete put chunk") #definimos que hacer con el paquete
+					switcher(paquete)
+
 				elif tipo_paquete == 1:
 					print("Es un paquete Hello")
 					self.recibir_hello(paquete)
@@ -179,6 +261,19 @@ class nodo_azul:
 					print("Respuesta de Locate")
 				elif tipo_paquete == 10:
 					print("Es un paquete delete")
+				elif tipo_paquete == 11:
+					print("Me preguntan si pertenesco al arbol generador")
+					self.check_if_tree(paquete)
+				elif tipo_paquete == 13:
+					print("Soy padre!")
+					self.newSon(paquete)
+				elif tipo_paquete == 12:
+					print("Si pertenece al Arbol")
+					if inTree:
+						daddy(paquete)
+				elif tipo_paquete == 18:
+					print("No pertenece al Arbol")
+					
 				else:
 					print("Es un paquete que no tiene sentido con el protocolo")
 
@@ -188,27 +283,25 @@ class nodo_azul:
 			self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete , direccion))
 			self.lock_lista_mensajes_recibidos.release()
+	
+	def main():
+	# 192.168.205.129#
+	ip = input("Digite la ip del nodo azul: ")
+	puerto = int(input("Digite el puerto que utilizara para comunicarse: "))
+	azul = nodo_azul(ip, puerto, '192.168.205.129', 10000)
+	thread_exit = threading.Thread(target = azul.morir)
+	thread_exit.start()
+	# Tiene que haber hilo que corra preguntando si quiere matarlo por consola
+	# Primero el azul ocupa la informacion de sus vecinos
+	# azul.peticion()
 
-def main():
-    # 192.168.205.129
-    ip = input("Digite la ip del nodo azul: ")
-    puerto = int(input("Digite el puerto que utilizara para comunicarse: "))
-    azul = nodo_azul(ip, puerto, '192.168.205.129', 10000)
-    thread_exit = threading.Thread(target = azul.morir)
-    thread_exit.start()
-    # Tiene que haber hilo que corra preguntando si quiere matarlo por consola
-    # Primero el azul ocupa la informacion de sus vecinos
-    # azul.peticion()
+	# Despues el azul puede comenzar su comunicacion con sus vecinos
+	# thread_recibir = threading.Thread(target = azul.recibir)
+	# thread_recibir.start()
 
-    # Despues el azul puede comenzar su comunicacion con sus vecinos
-    # thread_recibir = threading.Thread(target = azul.recibir)
-    # thread_recibir.start()
-
-    a = b'a'
-    # azul.enviar(a, '192.168.205.129', 10000)
-    # thread_revisar_mensajes = threading.Thread(target = azul.revisar_mensajes_recibidos)
-    # thread_revisar_mensajes.start()
-
-
-if __name__ == "__main__":
-    main()
+	a = b'a'
+	# azul.enviar(a, '192.168.205.129', 10000)
+	# thread_revisar_mensajes = threading.Thread(target = azul.revisar_mensajes_recibidos)
+	# thread_revisar_mensajes.start()
+	if __name__ == "__main__":
+		main()
