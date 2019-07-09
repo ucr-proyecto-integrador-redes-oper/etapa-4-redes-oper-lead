@@ -47,6 +47,7 @@ class NodoNaranja:
         self.TIMEOUT = timeout
         self.semaphore = threading.Semaphore(0)
         self.timeStamp = time.time()
+        self.blueNodesAsignedByMe = {}
 
     def nextSNRN(self, SNRN):
         next = (SNRN + 1) % 65536
@@ -126,6 +127,13 @@ class NodoNaranja:
         t5 = threading.Thread(target=self.HiloLogico)
         t5.start()
         print("hilo logico iniciado")
+
+    def clearAcks(self, acks, max):
+        acks.clear()
+        for i in range(max):
+            if (i != self.nodeID):
+                acks[i] = ''
+        return acks
 
     def HiloTimeOuts(self):
         while True:
@@ -218,13 +226,12 @@ class NodoNaranja:
         acks = {} # diccionario para acks que utiliza el ID del nodo naranja para ver en si está ack'd o no. Esto se debe apendizar con el SNRN del paquete de solicitud como llave al self.diccionariosACKs
         acks_done = False
         ganeNodo = False
-        # acks_Write = []
-        # acks_Write_Done = False
+        acks_Write = {}
+        acks_Write_Done = False
         MAX_NODOS_NARANJA = 6
         procesando_solicitud_azul = False
-        for i in range(MAX_NODOS_NARANJA):
-            if(i != self.nodeID):
-                acks[i] = ''
+        graphComplete = False
+        acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
         #print(acks)
         while True:
             #print("Entra al while True y espera en cola")
@@ -316,10 +323,7 @@ class NodoNaranja:
                         if package.posGrafo == nodoSolicitado:
                             # si recibí un decliene significa que perdí la batalla por el nodo por lo que tengo que iniciar una nueva.
                             self.diccionariosACKs.clear()
-                            acks.clear()
-                            for i in range(MAX_NODOS_NARANJA):
-                                if (i != self.nodeID):
-                                    acks[i] = ''
+                            acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
                             nodoSolicitado = self.tablaNodosAzules.getNodoDisponible()
                             self.tablaNodosAzules.marcarComoSolicitado(nodoSolicitado)
                             print("Dado que perdí el nodo: ", package.posGrafo, " me veo en la obligación de cambiar por: ", nodoSolicitado)
@@ -332,7 +336,7 @@ class NodoNaranja:
                             for i in self.routingTable.table:
                                 if not i.getNode() == self.nodeID:
                                     request = n_nPaq(0, self.SNRN, self.nodeID, i.getNode(), 'r', nodoSolicitado,
-                                                     i.getIp(), i.getPort(), prioridad)
+                                                     ipAzul, puertoAzul, prioridad)
                                     request = request.serialize()
                                     self.colaSalida.put(request)
                             self.SNRN = self.nextSNRN(self.SNRN)  # avanzo el SN para ponerle uno distinto al siguiente paquete de datos.
@@ -344,11 +348,23 @@ class NodoNaranja:
 
                         direccion = (package.ipAzul, package.puertoAzul)
                         self.tablaNodosAzules.write(package, direccion)
+                        saved_packet = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 's', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
+                        self.SNRN = self.nextSNRN(self.SNRN)
+                        saved_packet = saved_packet.serialize()
+                        self.colaSalida.put(saved_packet)
 
                     # write_ack = n_nPaq(0, sn, nodeID, package.origenNaranja, 's', posGrafo, ipAzul, puertoAzul, prioridad)
                     # por definirse, mas los acks seguramente iran por secure UDP.
-                    elif package == 'g':  # Go package, por definirse. # cuerpo del go package.
-                        print("Recibi un Go package de parte del nodo naranja: ", package.origenNaranja)
+                    elif package.tipo == b's':  # Saved package
+                        print("Recibi un Saved package de parte del nodo naranja: ", package.origenNaranja)
+                        if package.posGrafo == nodoSolicitado:
+                            acks_Write[package.origenNaranja] = 's'
+                            contador = 0
+                            for i in acks_Write.keys():
+                                contador += 1
+                            if contador == MAX_NODOS_NARANJA-1:
+                                acks_Write_Done = True
+
                 elif tipo == 1:  # el paquete es naranja-azul # cuerpo del naranja-azul
                     if not procesando_solicitud_azul: # si no estoy procesando una solicitud azul entonces puedo proceder
                         print("Comunicación naranja-azul")
@@ -361,9 +377,9 @@ class NodoNaranja:
                             puertoAzul = bluePacket.puertoAzul
 
                             print("Es un paquete de solicitud azul con IP: ", str(ipAzul), " y puerto: ", puertoAzul)
-                            #nodoSolicitado = self.tablaNodosAzules.getNodoDisponible()
-                            nodoSolicitado = 4
-                            self.SNRN = 0
+                            nodoSolicitado = self.tablaNodosAzules.getNodoDisponible()
+                            #nodoSolicitado = 4
+                            #self.SNRN = 0
                             self.tablaNodosAzules.marcarComoSolicitado(nodoSolicitado)
                             print("Nodo solicitado: ", nodoSolicitado)
                             prioridad = self.rand.randrange(0, 4294967296)
@@ -416,19 +432,47 @@ class NodoNaranja:
                     self.colaSalida.put(respuesta_azul)
                     for i in self.routingTable.table:
                         if not i.getNode() == self.nodeID:
-                            write_package = n_nPaq(0, self.SNRN, self.nodeID, i.getNode(), 'w', nodoSolicitado, i.getIp(), i.getPort(), prioridad)
+                            write_package = n_nPaq(0, self.SNRN, self.nodeID, i.getNode(), 'w', nodoSolicitado, str(ipAzul), puertoAzul, prioridad)
                             write_package.imprimir()
                             write_package = write_package.serialize()
                             self.colaSalida.put(write_package)
-                            procesando_solicitud_azul = False
+                    self.blueNodesAsignedByMe[nodoSolicitado] = (str(ipAzul), puertoAzul)
                     self.SNRN = self.nextSNRN(self.SNRN)
+                    ganeNodo = False
+
+                if acks_Write_Done:
+                    procesando_solicitud_azul = False
+                    nodoSolicitado = -1
+                    ipAzul = '0.0.0.0'
+                    puertoAzul = 0000
+                    acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
+                    acks_Write.clear()
+                    acks_Write_Done = False
+
+
+
 
             if len(self.tablaNodosAzules.nodosDisponibles) == 0:
                 print("holi")
-                #todo: cuando la tabla de nodos azules se quede sin nodos disponibles significa que estamos a punto de completar el grafo.
-                #todo: asegurarnos de que no hayan solicitudes procesandose actualmente ni mias ni de nadie más.
-                #todo: esto implica que las cola estén vacía y no este procesando nodos azules.
-                #todo: hay que enviarle entonces a los azules sus listas de vecinos completas con las respectivas direcciones IP.
-                #todo: esto implica hacer paquetes de tipo 16 y enviarlos a mis azules.
-                #todo: una vez verificado que esté realmente completo, se envía el paquete de que ya está lista la topología y así el azul puede comenzar a trabajar.
-                #todo: lo anterior es un paquete de tipo 17 (graph complete).
+                #todo: cuando la tabla de nodos azules se quede sin nodos disponibles significa que estamos a punto de completar el grafo. ESTA HECHO
+                #todo: asegurarnos de que no hayan solicitudes procesandose actualmente ni mias ni de nadie más. ESTA HECHO
+                #todo: esto implica que las cola estén vacía y no este procesando nodos azules. ESTA HECHO
+                #todo: hay que enviarle entonces a los azules sus listas de vecinos completas con las respectivas direcciones IP. ESTA HECHO
+                #todo: esto implica hacer paquetes de tipo 16 y enviarlos a mis azules. ESTA HECHO
+                #todo: una vez verificado que esté realmente completo, se envía el paquete de que ya está lista la topología y así el azul puede comenzar a trabajar. ESTA HECHO
+                #todo: lo anterior es un paquete de tipo 17 (graph complete). ESTA HECHO
+
+                if not procesando_solicitud_azul and not graphComplete and self.colaEntrada.empty() and self.colaSalida.empty():
+                    for i in self.blueNodesAsignedByMe.keys():
+                        respuesta_azul = n_aPaq(1, self.SNRN, 16, i, self.blueNodesAsignedByMe[i][0], self.blueNodesAsignedByMe[i][1], self.tablaNodosAzules.getListaVecinos(i))
+                        self.SNRN = self.nextSNRN(self.SNRN)
+                        respuesta_azul = respuesta_azul.serialize()
+                        self.colaSalida.put(respuesta_azul)
+                        graphComplete = True
+
+                if graphComplete and self.colaEntrada.empty() and self.colaSalida.empty():
+                    for i in self.blueNodesAsignedByMe.keys():
+                        paqGraphComplete = n_aPaq(1, self.SNRN, 17, i, self.blueNodesAsignedByMe[i][0], self.blueNodesAsignedByMe[i][1], self.tablaNodosAzules.getListaVecinos(i))
+                        self.SNRN = self.nextSNRN(self.SNRN)
+                        paqGraphComplete = paqGraphComplete.serialize()
+                        self.colaSalida.put(paqGraphComplete)
