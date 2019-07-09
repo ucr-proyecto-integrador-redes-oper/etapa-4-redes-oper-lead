@@ -79,20 +79,20 @@ class NodoNaranja:
         # colaEntrada.put(paqtest)
 
         #test = n_nPaq(0, 145, 3, 6, 'r', 350, '01.02.03.04', 5050, 500)  # mete de un solo en cola de entrada
-        test = n_aPaq(1, 145, 14, 0, '192.168.1.13', 7777, [0,0,0,0])
-        print("Serializando el paquete de prueba")
-        paqtest = test.serialize()
-        print("Luego de la serialización")
-        self.colaEntrada.put(paqtest)
+        #test = n_aPaq(1, 145, 14, 0, '192.168.1.13', 7777, [0,0,0,0])
+        #print("Serializando el paquete de prueba")
+        #paqtest = test.serialize()
+        #print("Luego de la serialización")
+        #self.colaEntrada.put(paqtest)
 
         #test2 = n_aPaq(1, 145, 14, 0, '192.168.1.13', 7777, [0,0,0,0])
         #paqtest2 = test2.serialize()
         #self.colaEntrada.put(paqtest2)
-        for i in range(6):
-            if not i == 0:
-                test2 = n_nPaq(0, 0, i, 0, 'a', 4, '01.02.03.04', 5050, 500)
-                paqtest2 = test2.serialize()
-                self.colaEntrada.put(paqtest2)
+        #for i in range(6):
+        #    if not i == 0:
+        #        test2 = n_nPaq(0, 0, i, 0, 'a', 4, '01.02.03.04', 5050, 500)
+        #        paqtest2 = test2.serialize()
+        #        self.colaEntrada.put(paqtest2)
 
         # test3 = n_nPaq(0, 0, 2, 0, 'd', 4, '01.02.03.04', 5050, 500)
         # paqtest3 = test3.serialize()
