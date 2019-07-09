@@ -16,7 +16,9 @@ class nodo_azul:
 		self.ip_naranja = ip_naranja
 		self.file_ID = 0
 		self.chunk_ID = 0
-		self.lista_vecinos = []  # Vecinos azules del nodo azul
+		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
+		self.chunks_almacenados = []
+		self.RRvecino = 0 #para recordar cual fue el ultimo vecino q envie
 		self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		self.lock_lista_mensajes_enviados = Lock()
 		self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
@@ -101,6 +103,21 @@ class nodo_azul:
 
     ###### COMUNICACION CON OTROS AZULES ######
 
+	def aQuienEnvio(self,chunk):###por round robin elijo a q vecino mandarlo
+		envio = False
+		self.RRvecino = self.RRvecino+1 
+		for vecino in lista_vecinos:
+			if vecino == self.RRvecino:
+				self.secure_udp.enviar(paquete, vecino[1][0], vecino[1][1])
+				envio = True
+		if envio == False:
+			self.RRvecino = 0
+			aQuienEnvio(chunk)
+		print("Enviando Chunk")
+		#algo creo q esta mal aqui pero no se como llegarle
+
+	#####inicializacion de nodos azules######
+	
 	def mandar_hellos(self):
 		for vecino in lista_vecinos:
 			paquete = paquete = (1).to_bytes(1, byteorder = 'big')
@@ -116,19 +133,35 @@ class nodo_azul:
 
 	def clonar_chunk(self, paquete_chunk):
 		# Clona el paquete, guarda copia y lo pasa con Round Robin
+		paquete = a_aPaq(0,0,0,0,0)
+		paquete.unserialize(paquete_chunk)
+		self.chunks_almacenados.append((paquete.arg2, paquete.arg3,paquete.arg4))#Guardo en esta estructura los chunks #id de imagen,#id de chunk #chunk
+		aQuienEnvio(paquete_chunk)
 		print("Clonando, guardando y pasando chunck")
 
 	def guardar_chunk(self, paquete_chunk):
 		# Guarda el chunck en disco
+		paquete = a_aPaq(0,0,0,0,0)
+		paquete.unserialize(paquete_chunk)
+		self.chunks_almacenados.append((paquete.arg2, paquete.arg3,paquete.arg4))
 		print("Guardando chunck")
 
 	def borrar_chunk(self, paquete_chunk):
 		# Borra el chunck
+		paquete = a_aPaq(0,0,0,0,0)
+		paquete.unserialize(paquete_chunk)
+		#metodo para borrar de arreglo que tenemos
+		for chunk in chunks_almacenados:
+			if chunk[0] == paquete.arg2:
+				if chunk[1] == paquete.arg3:
+					chunks_almacenados.remove(chunk)
 		print("Borrando chunck")
 
 	def pasar_chunk(self, paquete_chunk):
 		# Pasa el chunck
+		aQuienEnvio(paquete_chunk)
 		print("Pasando el chunkck")
+
 	###### ARBOL GENERADOR ######
 	def joinTree(self):
 		# revisa si vecino es parte del arbol  preguntando a sus vecinos si pertenecen
@@ -187,13 +220,35 @@ class nodo_azul:
 					vecino[3]=True
 
     ###### COMUNICACION CON VERDES	######
+	def broadcast(self, objeto, tipo):#envia a vecinos que pertenescan al Arbol
+		for vecino in lista_vecinos:
+			if vecino[3]==True:
+				objeto = objeto = (tipo).to_bytes(1, byteorder = 'big')
+				objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
+				self.secure_udp.enviar(objeto, vecino[1][0], vecino[1][1])
+#hace falta q elimine el que le envio el mensaje original
+
+
 
 	def depositar_objeto(self, objeto):
 		# Depositar objeto
+		switcher(objeto)
 		print("Depositando objeto")
 
 	def obtener_objeto(self, objeto):
 		# Hay que entregarle al cliente el objeto solicitado
+		paq = a_aPaq(0,0,0,0,0)
+		paq.unserialize(objeto)
+		tipo = paq.tipo
+		verde = paq.arg1
+		id_archivo = paq.arg2
+
+		for chunk in chunks_almacenados:
+			if chunk[0]==paq.arg2:
+				found = a_aPaq(7,verde,id_archivo,chunk[1],chunk[2])
+				#ip de verde donde esta?
+				self.secure_udp.enviar(found.serialize(), IP_verde, puerto_Verde)
+		broadcast(objeto,paq.tipo)
 		print("Obteniendo el objeto solicitado")
 
 	def existe_objeto(self, objeto):
