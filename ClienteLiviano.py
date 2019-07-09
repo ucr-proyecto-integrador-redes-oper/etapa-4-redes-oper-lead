@@ -24,8 +24,10 @@ for file in os.listdir(directory):
      i += 1
      continue
 
-ip_verde = input("IP del Nodo Verde: ")
-port_verde = int(input("Puerto del Nodo Verde: "))
+#ip_verde = input("IP del Nodo Verde: ")
+ip_verde = ifaddresses(interfaces()[1])[AF_INET].pop(0)['addr']
+#port_verde = int(input("Puerto del Nodo Verde: "))
+port_verde = 8020
 address = (ip_verde,port_verde)
 
 #Escoger la accion

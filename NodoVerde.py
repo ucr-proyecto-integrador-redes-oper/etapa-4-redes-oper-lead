@@ -26,9 +26,10 @@ class NodoVerde:
 		self.secure_udp = USL(self.ip, self.port, 5)
 
 	def run(self):
-		server = (self.ip, self.port)
-		self.sock.bind(server)
+		#server = (self.ip, self.port)
+		#self.sock.bind(server)
 		print("Escuchando: " + self.ip + ":" + str(self.port))
+		self.secure_udp.run()
 		
 		#Por si queremos consultar un archivo que no sea de esta maquina
 		#self.my_id = int(input("Digite otro ID de verde"))
@@ -51,6 +52,7 @@ class NodoVerde:
 			payload, client_address = self.sock.recvfrom(1035)  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
 			paquete = struct.unpack('!BH', payload[0:3])
 			tipo = paquete[0]
+			print("tipo en nodoverde RecibirCliente: ", tipo)
 			idArch = paquete[1]
 			if (tipo == 1):
 				# caso Depositar
@@ -105,28 +107,34 @@ class NodoVerde:
 	def HiloRecibidor(self):
 		while True:
 			payload , address = self.secure_udp.recibir()
-			tipo = int.from_bytes(payload[0:1], byteorder=('big'))
-			if (tipo == 3): #problema porque todos los uslPaq tienen 0 o 1 en la primera posicion 
-				# caso respuesta a EXISTS
-				resp = "El archivo que consulto si existe"
-				colaSalidaCliente.put(resp)
+			tipoUSL = int.from_bytes(payload[0:1], byteorder=('big'))
+			if(tipoUSL == 1):
+				aaPaqPay = str(payload[3:]).decode()
+				tipo = int.from_bytes(aaPaqPay[0:1], byteorder=('big'))
+				if (tipo == 3 ): 
+					# caso respuesta a EXISTS
+					resp = "El archivo que consulto si existe"
+					self.colaSalidaCliente.put(resp)
+					
+				if (tipo == 5):
+					# caso respuesta a COMPLETE
+					resp = "El archivo que consulto si etsa completo"
+					self.colaSalidaCliente.put(resp)
+					
+				if (tipo == 7):
+					# caso respuesta a GET
+					nombre = "temporal"
+					resp = "El archivo que consulto se guardo como " + nombre
+					self.colaSalidaCliente.put(resp)
+					
+				if (tipo == 9):
+					# caso respuesta a LOCATE
+					nombreNodo = "Nodo temporal"
+					resp = "El archivo que consulto si existe en nodo " + nombreNodo
+					self.colaSalidaCliente.put(resp)
 				
-			if (tipo == 5):
-				# caso respuesta a COMPLETE
-				resp = "El archivo que consulto si etsa completo"
-				colaSalidaCliente.put(resp)
-				
-			if (tipo == 7):
-				# caso respuesta a GET
-				nombre = "temporal"
-				resp = "El archivo que consulto se guardo como " + nombre
-				colaSalidaCliente.put(resp)
-				
-			if (tipo == 9):
-				# caso respuesta a LOCATE
-				nombreNodo = "Nodo temporal"
-				resp = "El archivo que consulto si existe en nodo " + nombreNodo
-				colaSalidaCliente.put(resp)
+			if(tipoUSL == 0):
+				print("Recibi por USL un ACK del Nodo azul en: ", address)
 
 	def HiloEnviador(self):
 		while True:
@@ -153,7 +161,7 @@ class NodoVerde:
 		
 		for x in range(tamArray-1):
 			arrayChunks[x] = data[i:i+1000]
-			i += 1000;
+			i += 1000
 		
 		arrayChunks[tamArray-1] = data[i:tam]
 		
@@ -161,7 +169,8 @@ class NodoVerde:
 		
 	def union(self, arrayChunks):
 		#metodo para reconstruir un archivo
+		variableTemp = 7878
 		
 	def seleccionNodoAzul(self): #por ahora esta hardcoded
 		#selecciona con cual nodo azul se va a comunicar
-		variableTemporal = 787878;
+		variableTemporal = 787878
