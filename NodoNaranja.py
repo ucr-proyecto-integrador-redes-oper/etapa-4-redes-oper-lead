@@ -246,7 +246,7 @@ class NodoNaranja:
                                       " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
                                       package.prioridad, ")")
-                                negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
                                 negacion_bytes = negacion.serialize()
 
                                 self.colaSalida.put(negacion_bytes)
@@ -254,7 +254,7 @@ class NodoNaranja:
                                 print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
 
                                 accept_bytes = accept.serialize()
 
@@ -267,7 +267,7 @@ class NodoNaranja:
                                     print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                    negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                    negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
 
                                     negacion_bytes = negacion.serialize()
 
@@ -277,7 +277,7 @@ class NodoNaranja:
                                     print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja," La prioridad del otro: ",
                                           package.prioridad, ")")
-                                    accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                    accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
 
                                     accept_bytes = accept.serialize()
 
@@ -286,7 +286,7 @@ class NodoNaranja:
                             print("No hay batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                   prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                            accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, strIP, package.puertoAzul, package.prioridad)
+                            accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
 
                             accept_bytes = accept.serialize()
 
@@ -299,6 +299,7 @@ class NodoNaranja:
                             print(self.diccionariosACKs)
                             if package.sn in self.diccionariosACKs:
                                 self.diccionariosACKs[package.sn][package.origenNaranja] = 'a' # del diccionario con llave = sn, en el lugar con llave origenNaranja, ponga el accept.
+                                print("EL ORIGEN NARANJA ES: ", package.origenNaranja)
                                 print(self.diccionariosACKs[package.sn][package.origenNaranja])
                             else:
                                 print("Es un ack de un paquete anterior al actual")
