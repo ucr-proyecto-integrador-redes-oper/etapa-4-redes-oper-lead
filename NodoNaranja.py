@@ -245,7 +245,7 @@ class NodoNaranja:
                                       " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
                                       package.prioridad, ")")
-                                negacion = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul,
+                                negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul,
                                                   puertoAzul,
                                                   prioridad)
 
@@ -256,7 +256,7 @@ class NodoNaranja:
                                 print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                accept = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
+                                accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
 
                                 accept_bytes = accept.serialize()
 
@@ -269,7 +269,7 @@ class NodoNaranja:
                                     print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                    negacion = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul, puertoAzul, prioridad)
+                                    negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul, puertoAzul, prioridad)
 
                                     negacion_bytes = negacion.serialize()
 
@@ -279,7 +279,7 @@ class NodoNaranja:
                                     print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja," La prioridad del otro: ",
                                           package.prioridad, ")")
-                                    accept = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
+                                    accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
 
                                     accept_bytes = accept.serialize()
 
@@ -288,7 +288,7 @@ class NodoNaranja:
                             print("No hay batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                   prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                            accept = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
+                            accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
 
                             accept_bytes = accept.serialize()
 
@@ -400,13 +400,15 @@ class NodoNaranja:
 
                 if procesando_solicitud_azul:
                     print("entré en procesando solicitud")
-                    countingACKs = 0;
+                    countingACKs = 0
                     for i in range(MAX_NODOS_NARANJA):
                         if not i == self.nodeID:
                             if self.diccionariosACKs[snSolicitud][i] == 'a':
                                 countingACKs += 1
                             if countingACKs == MAX_NODOS_NARANJA-1:
                                 ganeNodo = True
+                print(self.diccionariosACKs[snSolicitud][i])
+                print(self.diccionariosACKs)
                 print(ganeNodo)
                 if ganeNodo:
                     print("entré en gané nodo")
