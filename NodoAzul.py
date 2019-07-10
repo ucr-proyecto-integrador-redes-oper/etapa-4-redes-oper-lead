@@ -33,6 +33,28 @@ class nodo_azul:
 		self.lock_mensajes_procesar = Lock()
 		self.secure_udp = USL(self.ip, self.puerto, 5) # My ip, my port, my timeout
 		self.InTree = False #define si esta o no en el arbol
+##RUN###
+	def run(self):
+	#naranja Azul -> Azul Azul
+		t = threading.Thread(target=self.recibir_respuesta_peticion)
+		t.start()
+		print("Logico Peticiones")
+		# Recibidor de mensajes
+		t3 = threading.Thread(target=self.recibir)
+		t3.start()
+		print("recibidor de Mensjaes")
+
+
+
+
+
+
+
+
+
+
+
+
 
     ###### COMUNICACION CON EL NARANJA	######
 
@@ -50,23 +72,23 @@ class nodo_azul:
 				paquete = self.mensajes_procesar.pop(0)
 				self.lock_mensajes_procesar.release()
 				tipo_respuesta = int.from_bytes([paquete[0][3]], byteorder = 'big')
-				
+
 				if tipo_respuesta == 15: # Si es de tipo 15 no viene ni el ip ni el puerto
 					if self.id_nodo == -1:
 						self.id_nodo = int.from_bytes([paquete[0][4], paquete[0][5]], byteorder = 'big')
 					mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
 					direccion_momentanea = ('0' , 0)
 					self.lista_vecinos.append((mi_vecino, direccion_momentanea, False,False))
-					
+
 				elif tipo_respuesta == 16: # Es de tipo 16, viene el ip y el puerto
 					if self.id_nodo == -1:
 						self.id_nodo = int.from_bytes([paquete[0][4], paquete[0][5]], byteorder = 'big')
 					mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
-					ip_vecino = str(int.from_bytes([paquete[0][8]], byteorder = 'big')) + '.' 
-					+ str(int.from_bytes([paquete[0][9]], byteorder = 'big')) + '.' 
+					ip_vecino = str(int.from_bytes([paquete[0][8]], byteorder = 'big')) + '.'
+					+ str(int.from_bytes([paquete[0][9]], byteorder = 'big')) + '.'
 					+ str(int.from_bytes([paquete[0][10]], byteorder = 'big')) + '.'
 					+ str(int.from_bytes([paquete[0][11]], byteorder = 'big'))
-								
+
 					puerto_vecino = int.from_bytes([paquete[0][12], paquete[0][13]], byteorder = 'big')
 					direccion_vecino = (ip_vecino , puerto_vecino)
 					nuevo_vecino = True
@@ -76,7 +98,7 @@ class nodo_azul:
 							vecino[1] = direccion_vecino
 					if nuevo_vecino == True:
 						self.lista_vecinos.append((mi_vecino , direccion_vecino , False,False))
-						
+
 				else: # Es paquete complete
 					print("Se puede comenzar el almacenamiento")
 					grafo_completo = True
@@ -85,9 +107,12 @@ class nodo_azul:
 			if self.id_nodo == 0:#revisa si no es el nodo ROOT
 				self.InTree = True
 
-			while inTree == false:#intenta ingresar al arbol generador
-				joinTree()
-
+			#t = threading.Thread(target=self.analizar_peticiones)
+	        #t.start()#inicia azul azul
+			while self.InTree == False:#intenta ingresar al arbol generador
+				self.joinTree()
+				print("Pregunto si hay vecinos en el arbol")
+				time.sleep(2)
 
 
 
@@ -107,16 +132,16 @@ class nodo_azul:
 
 	def aQuienEnvio(self,chunk):###por round robin elijo a q vecino mandarlo
 		envio = False
-		self.RRvecino = self.RRvecino+1 
+		#self.RRvecino = self.RRvecino+1
 		#random = rand.randrange(len(self.lista_vecinos))
-		if self.lista_vecinos[random][] 
+		#if self.lista_vecinos[random][]
 		print("Enviando Chunk")
 		#hay q iterar sobre los que pertenecen al grafo
 
 	#####inicializacion de nodos azules######
-	
+
 	def mandar_hellos(self):
-		for vecino in lista_vecinos:
+		for vecino in self.lista_vecinos:
 			paquete = paquete = (1).to_bytes(1, byteorder = 'big')
 			paquete += (self.id_nodo).to_bytes(2, byteorder = 'big')
 			self.secure_udp.enviar(paquete, vecino[1][0], vecino[1][1])
@@ -164,18 +189,18 @@ class nodo_azul:
 		# revisa si vecino es parte del arbol  preguntando a sus vecinos si pertenecen
 		print("Vecino es parte de arbol?")
 		#mando mensaje preguntando a mis vecinos
-		for vecino in lista_vecinos:
+		for vecino in self.lista_vecinos:
 			paquete = paquete = (11).to_bytes(1, byteorder = 'big')
 			paquete += (self.id_nodo).to_bytes(2, byteorder = 'big')
 			self.secure_udp.enviar(paquete, vecino[1][0], vecino[1][1])
-			
+
 
 	def check_if_tree(self,paquete):
 		# reviso si pertenesco a Arbol
 		vecino = a_aPaq(0,0,0,0,0)
 		vecino.unserialize(paquete)
 		id_vecino = int (vecino.arg2)
-		
+
 		if(self.InTree):
 			print("Estoy en el arbol!")#envio mensaje diciendo que si tipo ido
 			for vecino in lista_vecinos:
@@ -189,7 +214,7 @@ class nodo_azul:
 				if vecino[0]==id_vecino:
 					IDONOT =  (18).to_bytes(1, byteorder = 'big')
 					IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
-					self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])	
+					self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
 
 	def newSon(self, paquete):
 		#si recibe un mensaje tipo daddy de un vecino que no se habia unido al arbol
@@ -278,7 +303,7 @@ class nodo_azul:
 		else:
 			pasar_chunk(paquete)
 
-	
+
 	def analizar_peticiones(self):
 		while True:
 			if len(self.mensajes_procesar) != 0:
@@ -286,7 +311,7 @@ class nodo_azul:
 				paquete = self.mensajes_procesar.pop(0) # Saca el primer paquete
 				self.lock_mensajes_procesar.release()
 				contenido_paquete = int.from_bytes([paquete[0][0]], byteorder = 'big')
-				tipo_paquete = int.from_bytes([paquete[0][3]], byteorder = 'big') # Paquetes con la forma 0 (Datos UDP) -  SN - SN - TIPO 
+				tipo_paquete = int.from_bytes([paquete[0][3]], byteorder = 'big') # Paquetes con la forma 0 (Datos UDP) -  SN - SN - TIPO
 				# "Switch" de tipo de paquete
 				if tipo_paquete == 0:
 					print("Es un paquete put chunk") #definimos que hacer con el paquete
@@ -325,7 +350,7 @@ class nodo_azul:
 						self.daddy(paquete)
 				elif tipo_paquete == 18:
 					print("No pertenece al Arbol")
-					
+
 				else:
 					print("Es un paquete que no tiene sentido con el protocolo")
 
@@ -335,14 +360,14 @@ class nodo_azul:
 			self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete , direccion))
 			self.lock_lista_mensajes_recibidos.release()
-	
+
 	def main():
 	# 192.168.205.129#
-	ip = input("Digite la ip del nodo azul: ")
-	puerto = int(input("Digite el puerto que utilizara para comunicarse: "))
-	azul = nodo_azul(ip, puerto, '192.168.205.129', 10000)
-	thread_exit = threading.Thread(target = azul.morir)
-	thread_exit.start()
+		ip = input("Digite la ip del nodo azul: ")
+		puerto = int(input("Digite el puerto que utilizara para comunicarse: "))
+		azul = nodo_azul(ip, puerto, '192.168.205.129', 10000)
+		thread_exit = threading.Thread(target = azul.morir)
+		thread_exit.start()
 	# Tiene que haber hilo que corra preguntando si quiere matarlo por consola
 	# Primero el azul ocupa la informacion de sus vecinos
 	# azul.peticion()
@@ -351,7 +376,7 @@ class nodo_azul:
 	# thread_recibir = threading.Thread(target = azul.recibir)
 	# thread_recibir.start()
 
-	a = b'a'
+		a = b'a'
 	# azul.enviar(a, '192.168.205.129', 10000)
 	# thread_revisar_mensajes = threading.Thread(target = azul.revisar_mensajes_recibidos)
 	# thread_revisar_mensajes.start()
