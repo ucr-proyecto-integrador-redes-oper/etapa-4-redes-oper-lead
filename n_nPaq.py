@@ -29,7 +29,7 @@ class n_nPaq:
         self.destinoNaranja = paquete[3]
         self.tipo = paquete[4]
         self.posGrafo = paquete[5]
-        self.ipAzul = str(paquete[6][2:len(paquete[6])])
+        self.ipAzul = paquete[6]
         self.puertoAzul = paquete[7]
         self.prioridad = paquete[8]
         return self
