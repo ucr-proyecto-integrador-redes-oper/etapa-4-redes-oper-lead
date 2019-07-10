@@ -6,6 +6,7 @@ import time
 import threading
 import sys
 from USL import USL
+from n_aPaq import n_aPaq
 from a_aPaq import a_aPaq
 import random
 
@@ -25,8 +26,8 @@ class nodo_azul:
 		self.lock_lista_mensajes_enviados = Lock()
 		self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
 		self.lock_lista_mensajes_recibidos = Lock()
-		self.mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.mi_socket.bind((self.ip, self.puerto))
+		#self.mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		#self.mi_socket.bind((self.ip, self.puerto))
 		self.sn = 0
 		self.id_nodo = -1
 		self.mensajes_procesar = []
@@ -36,6 +37,8 @@ class nodo_azul:
 ##RUN###
 	def run(self):
 	#naranja Azul -> Azul Azul
+		t2 = threading.Thread(target=self.secure_udp.run)
+		t2.start()
 		t = threading.Thread(target=self.recibir_respuesta_peticion)
 		t.start()
 		print("Logico Peticiones")
@@ -43,6 +46,7 @@ class nodo_azul:
 		t3 = threading.Thread(target=self.recibir)
 		t3.start()
 		print("recibidor de Mensjaes")
+		self.peticion()
 
 
 
@@ -55,13 +59,15 @@ class nodo_azul:
 
 
 
-
-    ###### COMUNICACION CON EL NARANJA	######
+	###### COMUNICACION CON EL NARANJA	######
 
 	def peticion(self):
 		# Se arma paquete de peticion al nodo Naranja
-		paquete = (14).to_bytes(1, byteorder='big')
-		self.secure_udp.send(paquete, self.ip_naranja, self.puerto_naranja)
+
+		peticion = n_aPaq(1, self.sn, 14, 0, self.ip, self.puerto,)
+		peticion = peticion.serialize()
+		#paquete = (14).to_bytes(1, byteorder='big')
+		self.secure_udp.send(peticion, self.ip_naranja, self.puerto_naranja)
 
 	def recibir_respuesta_peticion(self):
 		# Se espera respuestas del nodo Naranja, una por cada vecino
@@ -84,15 +90,15 @@ class nodo_azul:
 					if self.id_nodo == -1:
 						self.id_nodo = int.from_bytes([paquete[0][4], paquete[0][5]], byteorder = 'big')
 					mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
-					ip_vecino = str(int.from_bytes([paquete[0][8]], byteorder = 'big')) + '.'
-					+ str(int.from_bytes([paquete[0][9]], byteorder = 'big')) + '.'
-					+ str(int.from_bytes([paquete[0][10]], byteorder = 'big')) + '.'
+					ip_vecino = str(int.from_bytes([paquete[0][8]], byteorder = 'big')) + '.'\
+					+ str(int.from_bytes([paquete[0][9]], byteorder = 'big')) + '.'\
+					+ str(int.from_bytes([paquete[0][10]], byteorder = 'big')) + '.'\
 					+ str(int.from_bytes([paquete[0][11]], byteorder = 'big'))
 
 					puerto_vecino = int.from_bytes([paquete[0][12], paquete[0][13]], byteorder = 'big')
 					direccion_vecino = (ip_vecino , puerto_vecino)
 					nuevo_vecino = True
-					for vecino in lista_vecinos:
+					for vecino in self.lista_vecinos:
 						if vecino[0] == mi_vecino:
 							nuevo_vecino = False
 							vecino[1] = direccion_vecino
@@ -108,7 +114,7 @@ class nodo_azul:
 				self.InTree = True
 
 			#t = threading.Thread(target=self.analizar_peticiones)
-	        #t.start()#inicia azul azul
+			#t.start()#inicia azul azul
 		while self.InTree == False:#intenta ingresar al arbol generador
 			self.joinTree()
 			print("Pregunto si hay vecinos en el arbol")
@@ -129,7 +135,7 @@ class nodo_azul:
 			print("Digito algo que no es una D")
 			self.morir()
 
-    ###### COMUNICACION CON OTROS AZULES ######
+	###### COMUNICACION CON OTROS AZULES ######
 
 	def aQuienEnvio(self,chunk):###por round robin elijo a q vecino mandarlo
 		envio = False
@@ -242,7 +248,7 @@ class nodo_azul:
 					self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
 					vecino[3]=True
 
-    ###### COMUNICACION CON VERDES	######
+	###### COMUNICACION CON VERDES	######
 	def broadcast(self, objeto, tipo):#envia a vecinos que pertenescan al Arbol
 		for vecino in lista_vecinos:
 			if vecino[3]==True:
@@ -316,7 +322,7 @@ class nodo_azul:
 				# "Switch" de tipo de paquete
 				if tipo_paquete == 0:
 					print("Es un paquete put chunk") #definimos que hacer con el paquete
-					switcher(paquete)
+					self.switcher(paquete)
 
 				elif tipo_paquete == 1:
 					print("Es un paquete Hello")
@@ -361,8 +367,8 @@ class nodo_azul:
 			self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete , direccion))
 			self.lock_lista_mensajes_recibidos.release()
-
-	def main():
+'''
+def main():
 	# 192.168.205.129#
 		ip = input("Digite la ip del nodo azul: ")
 		puerto = int(input("Digite el puerto que utilizara para comunicarse: "))
@@ -383,3 +389,4 @@ class nodo_azul:
 	# thread_revisar_mensajes.start()
 	if __name__ == "__main__":
 		main()
+'''

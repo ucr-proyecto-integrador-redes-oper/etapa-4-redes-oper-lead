@@ -50,6 +50,7 @@ class USL:
             payload, address = self.sock.recvfrom(1035)
             aux = uslPaq()
             paquete = aux.unserialize(payload)
+            #paquete.imprimir()
             print("Mensaje Recibido de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
                  "Proveniente de:", address)
             if paquete.tipo == 0: # paquete de solicitud
@@ -59,7 +60,7 @@ class USL:
                 ack = paquete.serialize()
                 #self.cola_enviar.append(paquete)
                 self.sock.sendto(ack, address)
-                self.cola_recibir.append((payload,address))
+                self.cola_recibir.append((payload[3:],address))
             elif paquete.tipo == 1: # si es un ACK
                 for package in self.cola_enviar:
                     if package.sn == paquete.sn:

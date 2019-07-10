@@ -61,12 +61,13 @@ class NodoNaranja:
                 self.nodeID = i.getNode()
                 self.port = i.getPort()
         server = (self.ip, self.port)
-        self.secure_UDP = USL(self.ip, self.port, self.TIMEOUT)
+        self.secure_UDP = USL(self.ip, self.port+1, self.TIMEOUT)
         # Creates the routingtable
         # listaVecinos[]
         # Prepara Hilo que recibe mensajes
         self.sock.bind(server)
-        print("Escuchando: " + self.ip + ":" + str(self.port))
+        print("Escuchando: " + self.ip + ":" + str(self.port) + " en naranjas")
+        print("Escuchando: " + self.ip + ":" + str(self.port+1) + " en azules")
 
         ################################################################################# pruebas
         # (categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
@@ -108,7 +109,8 @@ class NodoNaranja:
         # print("Puerto",test2.puertoAzul)
         # print("Tipo",test2.tipo)
         # print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
-
+        t6= threading.Thread(target=self.secure_UDP.run)
+        t6.start()
         # Hilos recibidor
         t = threading.Thread(target=self.HiloRecibidorNaranja)
         t.start()
@@ -169,10 +171,14 @@ class NodoNaranja:
 
 
     def HiloRecibidorAzul(self):
+        print("entré en recibir azul")
         while True:
             paquete = n_aPaq()
+            print("estoy a punto de recibir un paquete")
             payload, client_address = self.secure_UDP.recibir()
+            print("recibí el paquete: ", payload)
             tipo = int.from_bytes(payload[:1], byteorder='little')
+            print("el paquete tiene tipo: ", tipo)
             if tipo == 1:
                 # caso 2 naranja azul
                 paquete = paquete.unserialize(payload)
@@ -228,7 +234,7 @@ class NodoNaranja:
         ganeNodo = False
         acks_Write = {}
         acks_Write_Done = False
-        MAX_NODOS_NARANJA = 6
+        MAX_NODOS_NARANJA = 1
         procesando_solicitud_azul = False
         graphComplete = False
         acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
