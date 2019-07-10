@@ -1,5 +1,5 @@
 from NodoAzul import nodo_azul
 #192.168.100.74 mio
 
-nodo=nodo_azul("192.168.100.74",8889,"192.168.100.74",8888)
-nodo.run()
+nodoazul = nodo_azul("10.1.137.166", 9999, "10.1.137.166", 8888)
+nodoazul.run()

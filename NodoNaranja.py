@@ -37,7 +37,7 @@ class NodoNaranja:
         self.routingTable = RoutingTable(routingTableDir)
         self.colaEntrada = queue.Queue()
         self.colaSalida = queue.Queue()
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        #self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.diccionariosACKs = {} # { SNRN_1:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_2:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_N:{1:'', 2:'', 3:'', 4:'', 5:''}}
         self.SNRN = self.rand.randrange(65536)
         self.secure_UDP = 0
@@ -60,13 +60,13 @@ class NodoNaranja:
                 self.nodeID = i.getNode()
                 self.port = i.getPort()
         server = (self.ip, self.port)
-        self.secure_UDP = USL(self.ip, self.port+1, self.TIMEOUT)
+        self.secure_UDP = USL(self.ip, self.port, self.TIMEOUT)
         # Creates the routingtable
         # listaVecinos[]
         # Prepara Hilo que recibe mensajes
-        self.sock.bind(server)
+        #self.sock.bind(server)
         print("Escuchando: " + self.ip + ":" + str(self.port) + " en naranjas")
-        print("Escuchando: " + self.ip + ":" + str(self.port+1) + " en azules")
+        print("Escuchando: " + self.ip + ":" + str(self.port) + " en azules")
 
         ################################################################################# pruebas
         # (categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
@@ -111,12 +111,12 @@ class NodoNaranja:
         t6= threading.Thread(target=self.secure_UDP.run)
         t6.start()
         # Hilos recibidor
-        t = threading.Thread(target=self.HiloRecibidorNaranja)
+        t = threading.Thread(target=self.HiloRecibidor)
         t.start()
-        print("hilo recibidor naranja iniciado")
-        t2 = threading.Thread(target=self.HiloRecibidorAzul)
-        t2.start()
-        print("hilo recibidor azul iniciado")
+        print("hilo recibidor iniciado")
+        #t2 = threading.Thread(target=self.HiloRecibidorAzul)
+        #t2.start()
+        #print("hilo recibidor azul iniciado")
         # hilo timeouts
         t3 = threading.Thread(target=self.HiloTimeOuts)
         t3.start()
@@ -145,9 +145,12 @@ class NodoNaranja:
                     self.semaphore.release()
                 self.timeStamp = time.time()
 
-    def HiloRecibidorNaranja(self):
+    def HiloRecibidor(self):
         while True:
-            payload, client_address = self.sock.recvfrom(1035)  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
+            print("estoy a punto de recibir un paquete")
+            payload, client_address = self.secure_UDP.recibir()  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
+            print("recibí el paquete: ", payload)
+            #payload, client_address = self.sock.recvfrom(1035)  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
             tipo = int.from_bytes(payload[:1], byteorder=('little'))
             if tipo == 0:
                 # caso 1 narnja naranja
@@ -163,30 +166,13 @@ class NodoNaranja:
             elif tipo == 1:
                 paquete = n_aPaq()
                 paquete = paquete.unserialize(payload)
-                paquete.ipAzul = client_address[0]
-                paquete.puertoAzul = client_address[1]
-                payload = paquete.serialize()
-                self.colaEntrada.put(payload)
-
-
-    def HiloRecibidorAzul(self):
-        print("entré en recibir azul")
-        while True:
-            paquete = n_aPaq()
-            print("estoy a punto de recibir un paquete")
-            payload, client_address = self.secure_UDP.recibir()
-            print("recibí el paquete: ", payload)
-            tipo = int.from_bytes(payload[:1], byteorder='little')
-            print("el paquete tiene tipo: ", tipo)
-            if tipo == 1:
-                # caso 2 naranja azul
-                paquete = paquete.unserialize(payload)
-                paquete.ipAzul = client_address[0] #para poder responderle necesito la IP
-                paquete.puertoAzul = client_address[1] #y el puerto
-                #sin embargo ambas cosas vienen con el mensaje que me mandó.
+                paquete.ipAzul = client_address[0]  # para poder responderle necesito la IP
+                paquete.puertoAzul = client_address[1]  # y el puerto
+                # sin embargo ambas cosas vienen con el mensaje que me mandó.
                 paquete.imprimir()
                 payload = paquete.serialize()
                 self.colaEntrada.put(payload)
+
 
     def HiloEnviador(self):
         while True:
