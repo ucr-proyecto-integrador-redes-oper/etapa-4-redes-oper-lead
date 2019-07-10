@@ -37,28 +37,22 @@ class nodo_azul:
 ##RUN###
 	def run(self):
 	#naranja Azul -> Azul Azul
-		t2 = threading.Thread(target=self.secure_udp.run)
+		t1 = threading.Thread(target=self.secure_udp.run)
+		t1.start()
+		t2 = threading.Thread(target=self.recibir) # Recibir del socket
 		t2.start()
-		t = threading.Thread(target=self.recibir_respuesta_peticion)
-		t.start()
-		print("Logico Peticiones")
-		# Recibidor de mensajes
-		t3 = threading.Thread(target=self.recibir)
-		t3.start()
-		print("recibidor de Mensjaes")
 		self.peticion()
-
-
+		
 
 	###### COMUNICACION CON EL NARANJA	######
 
 	def peticion(self):
 		# Se arma paquete de peticion al nodo Naranja
-
 		peticion = n_aPaq(1, self.sn, 14, 0, self.ip, self.puerto,)
 		peticion = peticion.serialize()
 		#paquete = (14).to_bytes(1, byteorder='big')
 		self.secure_udp.send(peticion, self.ip_naranja, self.puerto_naranja)
+		self.recibir_respuesta_peticion()
 
 	def recibir_respuesta_peticion(self):
 		# Se espera respuestas del nodo Naranja, una por cada vecino
@@ -313,7 +307,6 @@ class nodo_azul:
 				if tipo_paquete == 0:
 					print("Es un paquete put chunk") #definimos que hacer con el paquete
 					self.switcher(paquete)
-
 				elif tipo_paquete == 1:
 					print("Es un paquete Hello")
 					self.recibir_hello(paquete)
@@ -357,26 +350,16 @@ class nodo_azul:
 			self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete , direccion))
 			self.lock_lista_mensajes_recibidos.release()
-'''
+			
+'''			
 def main():
-	# 192.168.205.129#
-		ip = input("Digite la ip del nodo azul: ")
-		puerto = int(input("Digite el puerto que utilizara para comunicarse: "))
-		azul = nodo_azul(ip, puerto, '192.168.205.129', 10000)
-		thread_exit = threading.Thread(target = azul.morir)
-		thread_exit.start()
-	# Tiene que haber hilo que corra preguntando si quiere matarlo por consola
-	# Primero el azul ocupa la informacion de sus vecinos
-	# azul.peticion()
-
-	# Despues el azul puede comenzar su comunicacion con sus vecinos
-	# thread_recibir = threading.Thread(target = azul.recibir)
-	# thread_recibir.start()
-
-		a = b'a'
-	# azul.enviar(a, '192.168.205.129', 10000)
-	# thread_revisar_mensajes = threading.Thread(target = azul.revisar_mensajes_recibidos)
-	# thread_revisar_mensajes.start()
+	ip = input("Digite el ip que va a usar el azul ")
+	puerto = int(input("Digite el puerto que va a usar el azul "))
+	ip_naranja = input("Digite el ip que va a usar el naranja ")
+	puerto_naranja = int(input("Digite el puerto que va a usar el naranja "))
+	azul = nodo_azul(ip, puerto, ip_naranja, puerto_naranja) # ahi pasen lo que ocupen
+	azul.run()
+	
 	if __name__ == "__main__":
 		main()
 '''
