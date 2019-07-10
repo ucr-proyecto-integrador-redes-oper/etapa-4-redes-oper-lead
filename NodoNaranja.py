@@ -59,14 +59,14 @@ class NodoNaranja:
                 print(i.print_data())
                 self.nodeID = i.getNode()
                 self.port = i.getPort()
-        server = (self.ip, self.port)
+        # server = (self.ip, self.port)
         self.secure_UDP = USL(self.ip, self.port, self.TIMEOUT)
         # Creates the routingtable
         # listaVecinos[]
         # Prepara Hilo que recibe mensajes
-        #self.sock.bind(server)
-        print("Escuchando: " + self.ip + ":" + str(self.port) + " en naranjas")
-        print("Escuchando: " + self.ip + ":" + str(self.port) + " en azules")
+        # self.sock.bind(server)
+        # print("Escuchando: " + self.ip + ":" + str(self.port) + " en naranjas")
+        # print("Escuchando: " + self.ip + ":" + str(self.port) + " en azules")
 
         ################################################################################# pruebas
         # (categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
@@ -113,7 +113,7 @@ class NodoNaranja:
         # Hilos recibidor
         t = threading.Thread(target=self.HiloRecibidor)
         t.start()
-        print("hilo recibidor iniciado")
+        # print("hilo recibidor iniciado")
         #t2 = threading.Thread(target=self.HiloRecibidorAzul)
         #t2.start()
         #print("hilo recibidor azul iniciado")
@@ -123,11 +123,11 @@ class NodoNaranja:
         # hilo enviador
         t4 = threading.Thread(target=self.HiloEnviador)
         t4.start()
-        print(("hilo enviador iniciado"))
+        # print(("hilo enviador iniciado"))
         # hilo logico
         t5 = threading.Thread(target=self.HiloLogico)
         t5.start()
-        print("hilo logico iniciado")
+        # print("hilo logico iniciado")
 
     def clearAcks(self, acks, max):
         acks.clear()
@@ -147,7 +147,7 @@ class NodoNaranja:
 
     def HiloRecibidor(self):
         while True:
-            print("estoy a punto de recibir un paquete")
+            print("estoy a punto de recibir un paquete en el hilo recibidor")
             payload, client_address = self.secure_UDP.recibir()  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
             print("recibí el paquete: ", payload)
             #payload, client_address = self.sock.recvfrom(1035)  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
@@ -245,10 +245,7 @@ class NodoNaranja:
                                       " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
                                       package.prioridad, ")")
-                                negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul,
-                                                  puertoAzul,
-                                                  prioridad)
-
+                                negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
                                 negacion_bytes = negacion.serialize()
 
                                 self.colaSalida.put(negacion_bytes)
@@ -256,7 +253,7 @@ class NodoNaranja:
                                 print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
+                                accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                                 accept_bytes = accept.serialize()
 
@@ -269,7 +266,7 @@ class NodoNaranja:
                                     print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                    negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, ipAzul, puertoAzul, prioridad)
+                                    negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                                     negacion_bytes = negacion.serialize()
 
@@ -279,7 +276,7 @@ class NodoNaranja:
                                     print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja," La prioridad del otro: ",
                                           package.prioridad, ")")
-                                    accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
+                                    accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                                     accept_bytes = accept.serialize()
 
@@ -288,7 +285,7 @@ class NodoNaranja:
                             print("No hay batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                   prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                            accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, ipAzul, puertoAzul, prioridad)
+                            accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                             accept_bytes = accept.serialize()
 
@@ -301,6 +298,7 @@ class NodoNaranja:
                             print(self.diccionariosACKs)
                             if package.sn in self.diccionariosACKs:
                                 self.diccionariosACKs[package.sn][package.origenNaranja] = 'a' # del diccionario con llave = sn, en el lugar con llave origenNaranja, ponga el accept.
+                                print(self.diccionariosACKs[package.sn][package.origenNaranja])
                             else:
                                 print("Es un ack de un paquete anterior al actual")
                             print(self.diccionariosACKs)
@@ -407,7 +405,6 @@ class NodoNaranja:
                                 countingACKs += 1
                             if countingACKs == MAX_NODOS_NARANJA-1:
                                 ganeNodo = True
-                print(self.diccionariosACKs[snSolicitud][i])
                 print(self.diccionariosACKs)
                 print(ganeNodo)
                 if ganeNodo:

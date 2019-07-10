@@ -36,17 +36,17 @@ class USL:
         self.timeStamp = time.time()
         t = threading.Thread(target=self.manageTimeOuts)
         t.start()
-        print("inicio de timeouts para enviar logrado.")
+        # print("inicio de timeouts para enviar logrado.")
         t2 = threading.Thread(target=self.HiloRecibidor)
         t2.start()
-        print("inicio de hilo para recibir logrado.")
+        # print("inicio de hilo para recibir logrado.")
         t3 = threading.Thread(target=self.HiloEnviador)
         t3.start()
-        print("inicio de hilo para enviar logrado")
+        # print("inicio de hilo para enviar logrado")
 
     def HiloRecibidor(self):
         while True:
-            print("entré en el recibidor")
+            # print("entré en el recibidor")
             payload, address = self.sock.recvfrom(1035)
             aux = uslPaq()
             paquete = aux.unserialize(payload)
@@ -76,7 +76,7 @@ class USL:
 
 
     def manageTimeOuts(self):
-        print("entré a manageTimeOuts()")
+        # print("entré a manageTimeOuts()")
         while True:
             #print("Time stamp: ", self.timeStamp - time.time() )
             if time.time() - self.timeStamp > self.TIMEOUT:
@@ -103,7 +103,7 @@ class USL:
             if len(self.cola_enviar) > 0:
                 for package in self.cola_enviar: # package: uslPaq
                     paquete = package.serialize()
-                    print(f"{package.ip} , {package.port}")
+                    # print(f"{package.ip} , {package.port}")
                     ip = package.ip
                     port = package.port
                     self.sock.sendto(paquete, (ip, port))
