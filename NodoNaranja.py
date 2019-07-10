@@ -219,7 +219,7 @@ class NodoNaranja:
         ganeNodo = False
         acks_Write = {}
         acks_Write_Done = False
-        MAX_NODOS_NARANJA = 2
+        MAX_NODOS_NARANJA = 3
         procesando_solicitud_azul = False
         graphComplete = False
         acks = self.clearAcks(acks, MAX_NODOS_NARANJA)

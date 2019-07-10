@@ -4,4 +4,4 @@ for ifaceName in interfaces():
 for i in ifaddresses(ifaceName).setdefault(AF_INET, [{'addr':'No IP addr'}] )]
     print ('%s: %s' % (ifaceName, ', '.join(addresses)))
 
-print(ifaddresses(interfaces()[2])[AF_INET].pop(0)['addr'])
+print(ifaddresses(interfaces()[1])[AF_INET].pop(0)['addr'])
