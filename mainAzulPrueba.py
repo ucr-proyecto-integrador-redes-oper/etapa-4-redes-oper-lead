@@ -10,8 +10,10 @@ paqEnv = a_aPaq(0,0,0,0,0)
 print("entré a run y salí")
 while True:
 	paquete, address = usl.recibir()
-	print(paquete, " desde ", address)
 	tipoAzul = int.from_bytes(paquete[0:1], byteorder=("big"))
+	if(tipoAzul == 0):
+		idChunk = int.from_bytes(paquete[4:8], byteorder=("big"))
+		print("Recibi chunk con ID = ", idChunk)
 	if(tipoAzul == 2):
 		paqEnv = a_aPaq(3, 193, 1, 0, 0)
 	if(tipoAzul == 4):
