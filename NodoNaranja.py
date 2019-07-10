@@ -33,7 +33,7 @@ class NodoNaranja:
     # Aqui se ponen los detalles para ajusta puerto y IP
     def __init__(self, routingTableDir, dirGrafoAzul, timeout):
         self.rand = random
-        self.ip = ifaddresses(interfaces()[2])[AF_INET].pop(0)['addr']
+        self.ip = ifaddresses(interfaces()[1])[AF_INET].pop(0)['addr']
         self.routingTable = RoutingTable(routingTableDir)
         self.colaEntrada = queue.Queue()
         self.colaSalida = queue.Queue()
@@ -54,7 +54,6 @@ class NodoNaranja:
         return next
 
     def run(self):
-
         for i in self.routingTable.table:
             if i.getIp() == self.ip:
                 print(i.print_data())
