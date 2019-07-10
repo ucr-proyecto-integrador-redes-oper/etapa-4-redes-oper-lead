@@ -236,7 +236,6 @@ class NodoNaranja:
                     package = package.unserialize(packet)
                     print(package.categoria, package.sn, package.origenNaranja, package.destinoNaranja, package.puertoAzul,
                           package.ipAzul, str(package.tipo), package.posGrafo, package.prioridad)
-                    strIP = str(package.ipAzul)
                     if package.tipo == b'r':  # Request de un pquete (solicitud)
                         print("Packet request from: ", package.origenNaranja, " pidiendo el numero: ", package.posGrafo,
                               " con la prioridad: ", package.prioridad)
@@ -246,7 +245,7 @@ class NodoNaranja:
                                       " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
                                       package.prioridad, ")")
-                                negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
                                 negacion_bytes = negacion.serialize()
 
                                 self.colaSalida.put(negacion_bytes)
@@ -254,7 +253,7 @@ class NodoNaranja:
                                 print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                       prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                                 accept_bytes = accept.serialize()
 
@@ -267,7 +266,7 @@ class NodoNaranja:
                                     print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                                    negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                    negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                                     negacion_bytes = negacion.serialize()
 
@@ -277,7 +276,7 @@ class NodoNaranja:
                                     print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                           prioridad, ") (La ID del otro: ", package.origenNaranja," La prioridad del otro: ",
                                           package.prioridad, ")")
-                                    accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
+                                    accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                                     accept_bytes = accept.serialize()
 
@@ -286,13 +285,13 @@ class NodoNaranja:
                             print("No hay batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                   prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
-                            accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, strIP, package.puertoAzul, package.prioridad)
+                            accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                             accept_bytes = accept.serialize()
 
                             self.colaSalida.put(accept_bytes)
                     elif package.tipo == b'a':
-                        print("Recibi un accept por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ", package.posGrafo, " De parte del nodo azul: ", strIP, "Con SNRN: ", package.sn)
+                        print("Recibi un accept por el nodo naranja ", package.origenNaranja, " Sobre mi pedido: ", package.posGrafo, " De parte del nodo azul: ", package.ipAzul, "Con SNRN: ", package.sn)
 
                         if package.posGrafo == nodoSolicitado:
                             # agrega el ack al mapa de acks. lo voy a explicar arriba.
