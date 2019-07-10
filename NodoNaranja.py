@@ -406,7 +406,7 @@ class NodoNaranja:
                                 countingACKs += 1
                             if countingACKs == MAX_NODOS_NARANJA-1:
                                 ganeNodo = True
-                print(self.diccionariosACKs)
+                # print(self.diccionariosACKs)
                 print(ganeNodo)
                 if ganeNodo:
                     print("entré en gané nodo")
@@ -429,13 +429,13 @@ class NodoNaranja:
                     self.blueNodesAsignedByMe[nodoSolicitado] = (str(ipAzul), puertoAzul)
                     self.SNRN = self.nextSNRN(self.SNRN)
                     ganeNodo = False
+                    acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
 
                 if acks_Write_Done:
                     procesando_solicitud_azul = False
                     nodoSolicitado = -1
                     ipAzul = '0.0.0.0'
                     puertoAzul = 0000
-                    acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
                     acks_Write.clear()
                     acks_Write_Done = False
 
