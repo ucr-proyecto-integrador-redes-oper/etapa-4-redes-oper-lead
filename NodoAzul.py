@@ -50,15 +50,6 @@ class nodo_azul:
 
 
 
-
-
-
-
-
-
-
-
-
 	###### COMUNICACION CON EL NARANJA	######
 
 	def peticion(self):
@@ -108,13 +99,12 @@ class nodo_azul:
 				else: # Es paquete complete
 					print("Se puede comenzar el almacenamiento")
 					grafo_completo = True
-			self.lock_mensajes_procesar.release()
+			else:
+				self.lock_mensajes_procesar.release()
 			self.mandar_hellos() # Solo entra cuando llego un paquete complete
 			if self.id_nodo == 0:#revisa si no es el nodo ROOT
 				self.InTree = True
-
-			#t = threading.Thread(target=self.analizar_peticiones)
-			#t.start()#inicia azul azul
+				
 		while self.InTree == False:#intenta ingresar al arbol generador
 			self.joinTree()
 			print("Pregunto si hay vecinos en el arbol")
