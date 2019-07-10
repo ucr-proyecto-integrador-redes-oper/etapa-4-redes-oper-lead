@@ -432,6 +432,7 @@ class NodoNaranja:
                     acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
 
                 if acks_Write_Done:
+                    print("entré en write acks done")
                     procesando_solicitud_azul = False
                     nodoSolicitado = -1
                     ipAzul = '0.0.0.0'
