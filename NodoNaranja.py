@@ -408,7 +408,6 @@ class NodoNaranja:
                             if countingACKs == MAX_NODOS_NARANJA-1:
                                 ganeNodo = True
                 print(ganeNodo)
-                print(countingACKs)
                 if ganeNodo:
                     print("entré en gané nodo")
                     vecinos_azules = []
