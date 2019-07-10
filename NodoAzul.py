@@ -109,10 +109,11 @@ class nodo_azul:
 
 			#t = threading.Thread(target=self.analizar_peticiones)
 	        #t.start()#inicia azul azul
-			while self.InTree == False:#intenta ingresar al arbol generador
-				self.joinTree()
-				print("Pregunto si hay vecinos en el arbol")
-				time.sleep(2)
+		while self.InTree == False:#intenta ingresar al arbol generador
+			self.joinTree()
+			print("Pregunto si hay vecinos en el arbol")
+			print(self.lista_vecinos)
+			time.sleep(2)
 
 
 
