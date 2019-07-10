@@ -26,8 +26,6 @@ class nodo_azul:
 		self.lock_lista_mensajes_enviados = Lock()
 		self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
 		self.lock_lista_mensajes_recibidos = Lock()
-		#self.mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		#self.mi_socket.bind((self.ip, self.puerto))
 		self.sn = 0
 		self.id_nodo = -1
 		self.mensajes_procesar = []
@@ -139,7 +137,7 @@ class nodo_azul:
 
 	def recibir_hello(self, paquete):
 		mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
-		for vecino in lista_vecinos:
+		for vecino in self.lista_vecinos:
 			if vecino[0] == mi_vecino:
 				vecino[2] = True
 		# Pone un true para saber que el vecino ya le mando hello
@@ -149,7 +147,7 @@ class nodo_azul:
 		paquete = a_aPaq(0,0,0,0,0)
 		paquete.unserialize(paquete_chunk)
 		self.chunks_almacenados.append((paquete.arg2, paquete.arg3,paquete.arg4))#Guardo en esta estructura los chunks #id de imagen,#id de chunk #chunk
-		aQuienEnvio(paquete_chunk)
+		self.aQuienEnvio(paquete_chunk)
 		print("Clonando, guardando y pasando chunck")
 
 	def guardar_chunk(self, paquete_chunk):
@@ -164,15 +162,15 @@ class nodo_azul:
 		paquete = a_aPaq(0,0,0,0,0)
 		paquete.unserialize(paquete_chunk)
 		#metodo para borrar de arreglo que tenemos
-		for chunk in chunks_almacenados:
+		for chunk in self.chunks_almacenados:
 			if chunk[0] == paquete.arg2:
 				if chunk[1] == paquete.arg3:
-					chunks_almacenados.remove(chunk)
+					self.chunks_almacenados.remove(chunk)
 		print("Borrando chunck")
 
 	def pasar_chunk(self, paquete_chunk):
 		# Pasa el chunck
-		aQuienEnvio(paquete_chunk)
+		self.aQuienEnvio(paquete_chunk)
 		print("Pasando el chunkck")
 
 	###### ARBOL GENERADOR ######
@@ -194,14 +192,14 @@ class nodo_azul:
 
 		if(self.InTree):
 			print("Estoy en el arbol!")#envio mensaje diciendo que si tipo ido
-			for vecino in lista_vecinos:
+			for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
 					IDO = (12).to_bytes(1, byteorder = 'big')
 					IDO += (self.id_nodo).to_bytes(2, byteorder = 'big')
 					self.secure_udp.enviar(IDO, vecino[1][0], vecino[1][1])
 		else:
 			print("No Estoy en el arbol!")#envia mensaje diciendo que no TIPO idonot
-			for vecino in lista_vecinos:
+			for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
 					IDONOT =  (18).to_bytes(1, byteorder = 'big')
 					IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
@@ -214,7 +212,7 @@ class nodo_azul:
 		vecino.unserialize(paquete)
 		id_vecino = int (vecino.arg2)
 
-		for vecino in lista_vecinos:
+		for vecino in self.lista_vecinos:
 			if vecino[0] == id_vecino:
 				vecino[3] = True
 
@@ -225,7 +223,7 @@ class nodo_azul:
 		vecino = a_aPaq(0,0,0,0,0)
 		vecino.unserialize(paquete)
 		id_vecino = int (vecino.arg2)
-		for vecino in lista_vecinos:
+		for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
 					IDONOT = IDONOT = (13).to_bytes(1, byteorder = 'big')
 					IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
@@ -234,7 +232,7 @@ class nodo_azul:
 
 	###### COMUNICACION CON VERDES	######
 	def broadcast(self, objeto, tipo):#envia a vecinos que pertenescan al Arbol
-		for vecino in lista_vecinos:
+		for vecino in self.lista_vecinos:
 			if vecino[3]==True:
 				objeto = objeto = (tipo).to_bytes(1, byteorder = 'big')
 				objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
@@ -245,7 +243,7 @@ class nodo_azul:
 
 	def depositar_objeto(self, objeto):
 		# Depositar objeto
-		switcher(objeto)
+		self.switcher(objeto)
 		print("Depositando objeto")
 
 	def obtener_objeto(self, objeto):
@@ -256,11 +254,11 @@ class nodo_azul:
 		verde = paq.arg1
 		id_archivo = paq.arg2
 
-		for chunk in chunks_almacenados:
+		for chunk in self.chunks_almacenados:
 			if chunk[0]==paq.arg2:
 				found = a_aPaq(7,verde,id_archivo,chunk[1],chunk[2])
 				#ip de verde donde esta?
-				self.secure_udp.enviar(found.serialize(), IP_verde, puerto_Verde)
+				#self.secure_udp.enviar(found.serialize(), IP_verde, puerto_Verde)
 		self.broadcast(objeto,paq.tipo)
 		print("Obteniendo el objeto solicitado")
 
@@ -286,13 +284,13 @@ class nodo_azul:
 	#define que hacer con un chunk
 		decision = self.rand.randrange(0, 5)
 		if decision == 1:
-			clonar_chunk(paquete)
+			self.clonar_chunk(paquete)
 		elif decision == 2:
-			guardar_chunk(paquete)
+			self.guardar_chunk(paquete)
 		elif decision == 3:
-			borrar_chunk(paquete)
+			self.borrar_chunk(paquete)
 		else:
-			pasar_chunk(paquete)
+			self.pasar_chunk(paquete)
 
 
 	def analizar_peticiones(self):
@@ -336,7 +334,7 @@ class nodo_azul:
 					self.newSon(paquete)
 				elif tipo_paquete == 12:
 					print("Si pertenece al Arbol")
-					if not inTree:
+					if not self.InTree:
 						self.daddy(paquete)
 				elif tipo_paquete == 18:
 					print("No pertenece al Arbol")
@@ -349,7 +347,7 @@ class nodo_azul:
 			paquete , direccion = self.secure_udp.recibir()
 			self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete , direccion))
-			#self.lock_lista_mensajes_recibidos.release()
+			self.lock_lista_mensajes_recibidos.release()
 			
 '''			
 def main():
