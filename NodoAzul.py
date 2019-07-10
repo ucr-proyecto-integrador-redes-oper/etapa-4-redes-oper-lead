@@ -349,7 +349,7 @@ class nodo_azul:
 			paquete , direccion = self.secure_udp.recibir()
 			self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete , direccion))
-			self.lock_lista_mensajes_recibidos.release()
+			#self.lock_lista_mensajes_recibidos.release()
 			
 '''			
 def main():
