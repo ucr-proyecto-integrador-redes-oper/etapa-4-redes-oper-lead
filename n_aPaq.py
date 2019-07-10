@@ -27,7 +27,8 @@ class n_aPaq:
         self.sn = paquete[1]
         self.tipo = paquete[2]
         self.posGrafo = paquete[3]
-        self.ipAzul = paquete[4]
+        self.ipAzul = paquete[4].decode("utf-8")
+        print(self.ipAzul)
         self.puertoAzul = paquete[5]
 
         self.listaVecinos = list(pickle.loads(byteP[30:]))

@@ -30,6 +30,7 @@ class n_nPaq:
         self.tipo = paquete[4]
         self.posGrafo = paquete[5]
         self.ipAzul = paquete[6].decode("utf-8")
+        print(self.ipAzul)
         self.puertoAzul = paquete[7]
         self.prioridad = paquete[8]
         return self
