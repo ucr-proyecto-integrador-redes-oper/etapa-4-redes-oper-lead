@@ -189,7 +189,7 @@ class NodoNaranja:
                     # Routing_table returns the address
                     address = self.routingTable.retrieveAddress(targetNode)
                     try:
-                        self.sock.sendto(bytePacket, address)
+                        self.secure_UDP.send(bytePacket, address[0], address[1])
                     except OSError as err:
                         print("Failed on addressing: ", err)
                     # si es para azules
