@@ -1,5 +1,7 @@
 from NodoNaranja import NodoNaranja
 from NodoAzul import nodo_azul
 
-nodo = NodoNaranja("routingTable.txt", "Grafo_Referencia.csv", 5)
+timeout = int(input("Digite el tiempo de espera por timeout en segundos: \n"))
+nodeID = int(input("Digite el número que me corresponde como nodo naranja en el grafo: \n"))
+nodo = NodoNaranja("routingTable.txt", "Grafo_Referencia.csv", timeout, nodeID)
 nodo.run()

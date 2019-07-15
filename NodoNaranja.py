@@ -31,9 +31,10 @@ except ImportError:
 class NodoNaranja:
 
     # Aqui se ponen los detalles para ajusta puerto y IP
-    def __init__(self, routingTableDir, dirGrafoAzul, timeout):
+    def __init__(self, routingTableDir, dirGrafoAzul, timeout, ID):
         self.rand = random
-        self.ip = ifaddresses(interfaces()[1])[AF_INET].pop(0)['addr']
+        #self.ip = ifaddresses(interfaces()[1])[AF_INET].pop(0)['addr']
+        self.ip = '0.0.0.0'
         self.routingTable = RoutingTable(routingTableDir)
         self.colaEntrada = queue.Queue()
         self.colaSalida = queue.Queue()
@@ -42,7 +43,7 @@ class NodoNaranja:
         self.SNRN = self.rand.randrange(65536)
         self.secure_UDP = 0
         self.port = 0000
-        self.nodeID = 0
+        self.nodeID = ID
         self.tablaNodosAzules = TablaNodosAzules(dirGrafoAzul)
         self.TIMEOUT = timeout
         self.semaphore = threading.Semaphore(0)
@@ -55,9 +56,9 @@ class NodoNaranja:
 
     def run(self):
         for i in self.routingTable.table:
-            if i.getIp() == self.ip:
+            if i.getNode() == self.nodeID:
                 print(i.print_data())
-                self.nodeID = i.getNode()
+                self.ip = i.getIp()
                 self.port = i.getPort()
         # server = (self.ip, self.port)
         self.secure_UDP = USL(self.ip, self.port, self.TIMEOUT)

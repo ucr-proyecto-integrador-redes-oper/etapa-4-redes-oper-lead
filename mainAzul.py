@@ -1,5 +1,10 @@
 from NodoAzul import nodo_azul
 #192.168.100.74 mio
 
-nodoazul = nodo_azul("10.1.137.166", 9999, "10.1.137.166", 8888)
+ipAzul = str(input("Digite la mi IP como nodo azul: \n"))
+puertoAzul = int(input("Digite mi puerto como nodo azul: \n"))
+ipNaranja = str(input("Digite la IP del nodo naranja al que le voy a hablar: \n"))
+puertoNaranja = int(input("Digite el puerto del nodo naranja al que le voy a hablar: \n"))
+
+nodoazul = nodo_azul(ipAzul, puertoAzul, ipNaranja, puertoNaranja)
 nodoazul.run()
