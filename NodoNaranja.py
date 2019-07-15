@@ -237,8 +237,8 @@ class NodoNaranja:
                             print("No hay batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
                                   prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
+                            self.tablaNodosAzules.marcarComoSolicitado(package.posGrafo)
                             accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
-
                             accept_bytes = accept.serialize()
 
                             self.colaSalida.put(accept_bytes)
@@ -396,14 +396,14 @@ class NodoNaranja:
 
 
             if len(self.tablaNodosAzules.nodosDisponibles) == 0:
-                print("holi")
-                #todo: cuando la tabla de nodos azules se quede sin nodos disponibles significa que estamos a punto de completar el grafo. ESTA HECHO
-                #todo: asegurarnos de que no hayan solicitudes procesandose actualmente ni mias ni de nadie más. ESTA HECHO
-                #todo: esto implica que las cola estén vacía y no este procesando nodos azules. ESTA HECHO
-                #todo: hay que enviarle entonces a los azules sus listas de vecinos completas con las respectivas direcciones IP. ESTA HECHO
-                #todo: esto implica hacer paquetes de tipo 16 y enviarlos a mis azules. ESTA HECHO
-                #todo: una vez verificado que esté realmente completo, se envía el paquete de que ya está lista la topología y así el azul puede comenzar a trabajar. ESTA HECHO
-                #todo: lo anterior es un paquete de tipo 17 (graph complete). ESTA HECHO
+                # print("holi")
+                # todo: cuando la tabla de nodos azules se quede sin nodos disponibles significa que estamos a punto de completar el grafo. ESTA HECHO
+                # todo: asegurarnos de que no hayan solicitudes procesandose actualmente ni mias ni de nadie más. ESTA HECHO
+                # todo: esto implica que las cola estén vacía y no este procesando nodos azules. ESTA HECHO
+                # todo: hay que enviarle entonces a los azules sus listas de vecinos completas con las respectivas direcciones IP. ESTA HECHO
+                # todo: esto implica hacer paquetes de tipo 16 y enviarlos a mis azules. ESTA HECHO
+                # todo: una vez verificado que esté realmente completo, se envía el paquete de que ya está lista la topología y así el azul puede comenzar a trabajar. ESTA HECHO
+                # todo: lo anterior es un paquete de tipo 17 (graph complete). ESTA HECHO
 
                 if not procesando_solicitud_azul and not graphComplete and self.colaEntrada.empty() and self.colaSalida.empty():
                     for i in self.blueNodesAsignedByMe.keys():

@@ -22,29 +22,33 @@ class nodo_azul:
 		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
 		self.chunks_almacenados = []
 		self.RRvecino = 0 # para recordar cual fue el ultimo vecino q envie
-		self.lista_mensajes_enviados = []  # Control de mensajes enviados
-		self.lock_lista_mensajes_enviados = Lock()
-		self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
-		self.lock_lista_mensajes_recibidos = Lock()
+		# self.lista_mensajes_enviados = []  # Control de mensajes enviados
+		# self.lock_lista_mensajes_enviados = Lock()
+		# self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
+		# self.lock_lista_mensajes_recibidos = Lock()
 		self.sn = 0
 		self.id_nodo = -1
 		self.mensajes_procesar = []
-		self.lock_mensajes_procesar = Lock()
+		self.mensajes_enviar = []
+		# self.lock_mensajes_procesar = Lock()
 		self.secure_udp = USL(self.ip, self.puerto, 5) # My ip, my port, my timeout
 		self.InTree = False #define si esta o no en el arbol
+		self.graphComplete = False
 ##RUN###
 	def run(self):
 		# naranja Azul -> Azul Azul
 		t1 = threading.Thread(target=self.secure_udp.run)
 		t1.start()
-		t2 = threading.Thread(target=self.recibir) # Recibir del socket
+		t2 = threading.Thread(target=self.analizar_peticiones) # analizar peticiones ahora es el hilo lógico
 		t2.start()
-		# TODO: HAY QUE HACER UN HILO ENVIADOR Y QUE EL RECIBIR SE COMPORTE SIMILAR AL NARANJA
-		t3 = threading.Thread(target=self.HiloEnviador)
+		t3 = threading.Thread(target=self.recibir) # Recibir del socket
 		t3.start()
-		#TODO: HAY QUE HACER EL INPUT PARA CONSOLA
-		t4 = threading.Thread(target=self.ConsoleInput)
+		# TODO: HAY QUE HACER UN HILO ENVIADOR Y QUE EL RECIBIR SE COMPORTE SIMILAR AL NARANJA
+		t4 = threading.Thread(target=self.HiloEnviador)
 		t4.start()
+		#TODO: HAY QUE HACER EL INPUT PARA CONSOLA
+		t5 = threading.Thread(target=self.ConsoleInput)
+		t5.start()
 		self.peticion()
 		
 
@@ -55,14 +59,15 @@ class nodo_azul:
 		peticion = n_aPaq(1, self.sn, 14, 0, self.ip, self.puerto,)
 		peticion = peticion.serialize()
 		#paquete = (14).to_bytes(1, byteorder='big')
-		self.secure_udp.send(peticion, self.ip_naranja, self.puerto_naranja)
-		self.recibir_respuesta_peticion()
+		self.mensajes_enviar.append(peticion)
+		#self.secure_udp.send(peticion, self.ip_naranja, self.puerto_naranja)
+		# self.recibir_respuesta_peticion()
 
+	'''
 	def recibir_respuesta_peticion(self):
 		# Se espera respuestas del nodo Naranja, una por cada vecino
-		grafo_completo = False
-		while grafo_completo == False:
-			self.lock_mensajes_procesar.acquire()
+		while self.graphComplete == False:
+			# self.lock_mensajes_procesar.acquire()
 			if len(self.mensajes_procesar) != 0:
 				paquete = self.mensajes_procesar.pop(0)
 				self.lock_mensajes_procesar.release()
@@ -108,19 +113,33 @@ class nodo_azul:
 			print("Pregunto si hay vecinos en el arbol")
 			print(self.lista_vecinos)
 			time.sleep(2)
-
+		'''
 
 	def analizar_peticiones(self):
 		while True:
 			if len(self.mensajes_procesar) != 0:
 				#self.lock_mensajes_procesar.acquire()
-				paquete = self.mensajes_procesar.pop(0) # Saca el primer paquete
+				paquete, address = self.mensajes_procesar.pop(0) # Saca el primer paquete
 				#self.lock_mensajes_procesar.release()
 				#contenido_paquete = int.from_bytes([paquete[0][0]], byteorder = 'big')
 				categoria = int.from_bytes(paquete[:1], byteorder='little')
 				if categoria == 1: # Paquete es Naranja-Azul
-					#TODO: HACER PROCESAMIENTO DE PAQUETE NARANJA_AZUL
-				elif categoria == 2: # Paquete es azul-azul
+					#TODO: HACER PROCESAMIENTO DE PAQUETE NARANJA_AZUL: TERMINADO
+					package = n_aPaq()
+					package = package.unserialize(paquete)
+					tipo_paquete = package.tipo
+					if tipo_paquete == 15:
+						print("recibí un paquete de tipo 15 de parte del nodo: ", address[0], ":", address[1])
+						self.id_nodo = package.posGrafo
+						self.lista_vecinos = package.listaVecinos
+					elif tipo_paquete == 16:
+						if self.id_nodo == package.posGrafo:
+							print("Recibí mi lista de vecinos: ")
+							print(package.listaVecinos)
+							self.lista_vecinos = package.listaVecinos
+					elif tipo_paquete == 17:
+						self.graphComplete = True
+				elif categoria == 2 and self.graphComplete: # Paquete es azul-azul
 					package = a_aPaq()
 					package = package.unserialize(paquete)
 					tipo_paquete = package.tipo
@@ -164,7 +183,18 @@ class nodo_azul:
 
 					else:
 						print("Es un paquete que no tiene sentido con el protocolo")
+				elif categoria == 3 and self.graphComplete: # verde-azul
+					# TODO: Aquí deberían ir las acciones verde-azul
+					print("Comunicación verde-azul")
+				else: # Si de casualidad llegó un paquete azul o verde antes de que la topología estuviera completa entonces lo regresa a la cola.
+					print("LLEGÓ UN MENSAJE DE CATEGORIA: ", categoria, " Y EL GRAFO ESTA EN ESTADO: ", self.graphComplete)
+					self.mensajes_procesar.append(paquete)
 
+	def HiloEnviador(self):
+		while True:
+			if len(self.mensajes_enviar) > 0:
+				paquete = self.mensajes_enviar.pop(0)
+				self.secure_udp.send(paquete, self.ip_naranja, self.puerto_naranja)
 	# TODO: ESTE ES GIGANTE
 	# TODO: NECESITAMOS ACOMODAR TODOS LOS MÉTODOS PARA QUE SIRVAN CON EL PACKAGE a_aPaq() EN VEZ DE CON EL ARREGLO DE BYTES.
 
@@ -206,7 +236,7 @@ class nodo_azul:
 		# Clona el paquete, guarda copia y lo pasa con Round Robin
 		paquete = a_aPaq(0,0,0,0,0)
 		paquete.unserialize(paquete_chunk)
-		self.chunks_almacenados.append((paquete.arg2, paquete.arg3,paquete.arg4))#Guardo en esta estructura los chunks #id de imagen,#id de chunk #chunk
+		self.chunks_almacenados.append((paquete.fileID, paquete.chunkID, paquete.payload))#Guardo en esta estructura los chunks #id de imagen,#id de chunk #chunk
 		self.aQuienEnvio(paquete_chunk)
 		print("Clonando, guardando y pasando chunck")
 
@@ -214,7 +244,7 @@ class nodo_azul:
 		# Guarda el chunck en disco
 		paquete = a_aPaq(0,0,0,0,0)
 		paquete.unserialize(paquete_chunk)
-		self.chunks_almacenados.append((paquete.arg2, paquete.arg3,paquete.arg4))
+		self.chunks_almacenados.append((paquete.fileID, paquete.chunkID, paquete.payload))
 		print("Guardando chunck")
 
 	def borrar_chunk(self, paquete_chunk):
@@ -223,8 +253,8 @@ class nodo_azul:
 		paquete.unserialize(paquete_chunk)
 		#metodo para borrar de arreglo que tenemos
 		for chunk in self.chunks_almacenados:
-			if chunk[0] == paquete.arg2:
-				if chunk[1] == paquete.arg3:
+			if chunk[0] == paquete.fileID:
+				if chunk[1] == paquete.chunkID:
 					self.chunks_almacenados.remove(chunk)
 		print("Borrando chunck")
 
@@ -248,7 +278,7 @@ class nodo_azul:
 		# reviso si pertenesco a Arbol
 		vecino = a_aPaq(0,0,0,0,0)
 		vecino.unserialize(paquete)
-		id_vecino = int (vecino.arg2)
+		id_vecino = int (vecino.fileID)
 
 		if(self.InTree):
 			print("Estoy en el arbol!")#envio mensaje diciendo que si tipo ido
@@ -270,7 +300,7 @@ class nodo_azul:
 		print("Ahora este nodo es hijo mio")
 		vecino = a_aPaq(0,0,0,0,0)
 		vecino.unserialize(paquete)
-		id_vecino = int (vecino.arg2)
+		id_vecino = int (vecino.fileID)
 
 		for vecino in self.lista_vecinos:
 			if vecino[0] == id_vecino:
@@ -282,7 +312,7 @@ class nodo_azul:
 		inTree=True
 		vecino = a_aPaq(0,0,0,0,0)
 		vecino.unserialize(paquete)
-		id_vecino = int (vecino.arg2)
+		id_vecino = int (vecino.fileID)
 		for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
 					IDONOT = IDONOT = (13).to_bytes(1, byteorder = 'big')
@@ -311,11 +341,11 @@ class nodo_azul:
 		paq = a_aPaq(0,0,0,0,0)
 		paq.unserialize(objeto)
 		tipo = paq.tipo
-		verde = paq.arg1
-		id_archivo = paq.arg2
+		verde = paq.greenID
+		id_archivo = paq.fileID
 
 		for chunk in self.chunks_almacenados:
-			if chunk[0]==paq.arg2:
+			if chunk[0]==paq.fileID:
 				found = a_aPaq(7,verde,id_archivo,chunk[1],chunk[2])
 				#ip de verde donde esta?
 				#self.secure_udp.enviar(found.serialize(), IP_verde, puerto_Verde)
@@ -355,10 +385,13 @@ class nodo_azul:
 	def recibir(self):
 		while True:
 			paquete, direccion = self.secure_udp.recibir()
+			print("Paquete recibido: ", paquete)
 			# self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete, direccion))
 			# self.lock_lista_mensajes_recibidos.release()
-			
+
+	def ConsoleInput(self):
+		print("consoleinput")
 '''			
 def main():
 	ip = input("Digite el ip que va a usar el azul ")
