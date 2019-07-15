@@ -62,53 +62,6 @@ class NodoNaranja:
                 self.port = i.getPort()
         # server = (self.ip, self.port)
         self.secure_UDP = USL(self.ip, self.port, self.TIMEOUT)
-        # Creates the routingtable
-        # listaVecinos[]
-        # Prepara Hilo que recibe mensajes
-        # self.sock.bind(server)
-        # print("Escuchando: " + self.ip + ":" + str(self.port) + " en naranjas")
-        # print("Escuchando: " + self.ip + ":" + str(self.port) + " en azules")
-
-        ################################################################################# pruebas
-        # (categoria,SN, origennaranja,destinonaranja,tipo,posGrafo,ipAzul,puertoazul,prioridad)
-        # r:request,a:accept,w:write,d:decline,g:go
-        # for i in range(0,10):
-        # test = n_nPaq(0,145+i,i%6,6,'r',350+i,'01.02.03.04',5050,500+i)#mete de un solo en cola de entrada
-        # print("Serializando el paquete de prueba")
-        # paqtest = test.serialize()
-        # print("Luego de la serialización")
-        # colaEntrada.put(paqtest)
-
-        #test = n_nPaq(0, 145, 3, 6, 'r', 350, '01.02.03.04', 5050, 500)  # mete de un solo en cola de entrada
-        #test = n_aPaq(1, 145, 14, 0, '192.168.1.13', 7777, [0,0,0,0])
-        #print("Serializando el paquete de prueba")
-        #paqtest = test.serialize()
-        #print("Luego de la serialización")
-        #self.colaEntrada.put(paqtest)
-
-        #test2 = n_aPaq(1, 145, 14, 0, '192.168.1.13', 7777, [0,0,0,0])
-        #paqtest2 = test2.serialize()
-        #self.colaEntrada.put(paqtest2)
-        #for i in range(6):
-        #    if not i == 0:
-        #        test2 = n_nPaq(0, 0, i, 0, 'a', 4, '01.02.03.04', 5050, 500)
-        #        paqtest2 = test2.serialize()
-        #        self.colaEntrada.put(paqtest2)
-
-        # test3 = n_nPaq(0, 0, 2, 0, 'd', 4, '01.02.03.04', 5050, 500)
-        # paqtest3 = test3.serialize()
-        # self.colaEntrada.put(paqtest3)
-
-        # self.tablaNodosAzules.printGrafo()
-
-        # test.unserialize(paqtest)
-        #############################################################################
-        # test2 = n_aPaq(1,559,'a',220,'01.02.03.04',5050,[(20,'107.53.2.1',5051),(35,'107.53.2.56',6062)])
-        # paquete2 = test2.serialize()
-        # test2.unserialize(paquete2)
-        # print("Puerto",test2.puertoAzul)
-        # print("Tipo",test2.tipo)
-        # print("Puerto del segundo vecino: ", test2.listaVecinos[1][2])
         t6= threading.Thread(target=self.secure_UDP.run)
         t6.start()
         # Hilos recibidor
@@ -209,14 +162,12 @@ class NodoNaranja:
         # paq.unserialize(test);#ya puede usar paq para todo
         # print(paq.puertoAzul)
         puertoAzul = 8888
-        posGrafo = 0
         ipAzul = "0.0.0.0"
         nodoSolicitado = 350
         snSolicitud = 0
         prioridad = 500
 
         acks = {} # diccionario para acks que utiliza el ID del nodo naranja para ver en si está ack'd o no. Esto se debe apendizar con el SNRN del paquete de solicitud como llave al self.diccionariosACKs
-        acks_done = False
         ganeNodo = False
         acks_Write = {}
         acks_Write_Done = False

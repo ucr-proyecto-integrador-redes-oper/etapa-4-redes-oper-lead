@@ -21,7 +21,7 @@ class nodo_azul:
 		self.chunk_ID = 0
 		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
 		self.chunks_almacenados = []
-		self.RRvecino = 0 #para recordar cual fue el ultimo vecino q envie
+		self.RRvecino = 0 # para recordar cual fue el ultimo vecino q envie
 		self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		self.lock_lista_mensajes_enviados = Lock()
 		self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
@@ -34,11 +34,17 @@ class nodo_azul:
 		self.InTree = False #define si esta o no en el arbol
 ##RUN###
 	def run(self):
-	#naranja Azul -> Azul Azul
+		# naranja Azul -> Azul Azul
 		t1 = threading.Thread(target=self.secure_udp.run)
 		t1.start()
 		t2 = threading.Thread(target=self.recibir) # Recibir del socket
 		t2.start()
+		# TODO: HAY QUE HACER UN HILO ENVIADOR Y QUE EL RECIBIR SE COMPORTE SIMILAR AL NARANJA
+		t3 = threading.Thread(target=self.HiloEnviador)
+		t3.start()
+		#TODO: HAY QUE HACER EL INPUT PARA CONSOLA
+		t4 = threading.Thread(target=self.ConsoleInput)
+		t4.start()
 		self.peticion()
 		
 
@@ -104,9 +110,63 @@ class nodo_azul:
 			time.sleep(2)
 
 
+	def analizar_peticiones(self):
+		while True:
+			if len(self.mensajes_procesar) != 0:
+				#self.lock_mensajes_procesar.acquire()
+				paquete = self.mensajes_procesar.pop(0) # Saca el primer paquete
+				#self.lock_mensajes_procesar.release()
+				#contenido_paquete = int.from_bytes([paquete[0][0]], byteorder = 'big')
+				categoria = int.from_bytes(paquete[:1], byteorder='little')
+				if categoria == 1: # Paquete es Naranja-Azul
+					#TODO: HACER PROCESAMIENTO DE PAQUETE NARANJA_AZUL
+				elif categoria == 2: # Paquete es azul-azul
+					package = a_aPaq()
+					package = package.unserialize(paquete)
+					tipo_paquete = package.tipo
+					# "Switch" de tipo de paquete
+					if tipo_paquete == 0:
+						print("Es un paquete put chunk") #definimos que hacer con el paquete
+						self.switcher(paquete)
+					elif tipo_paquete == 1:
+						print("Es un paquete Hello")
+						self.recibir_hello(paquete)
+					elif tipo_paquete == 2:
+						print("Es un paquete Exists?")
+					elif tipo_paquete == 3:
+						print("Respuesta de Exists?")
+					elif tipo_paquete == 4:
+						print("Es un paquete Complete?")
+					elif tipo_paquete == 5:
+						print("Resuesta de Complete?")
+					elif tipo_paquete == 6:
+						print("Es un paquete Get")
+					elif tipo_paquete == 7:
+						print("Respuesta de Get")
+					elif tipo_paquete == 8:
+						print("Es un paquete Locate")
+					elif tipo_paquete == 9:
+						print("Respuesta de Locate")
+					elif tipo_paquete == 10:
+						print("Es un paquete delete")
+					elif tipo_paquete == 11:
+						print("Me preguntan si pertenesco al arbol generador")
+						self.check_if_tree(paquete)
+					elif tipo_paquete == 13:
+						print("Soy padre!")
+						self.newSon(paquete)
+					elif tipo_paquete == 12:
+						print("Si pertenece al Arbol")
+						if not self.InTree:
+							self.daddy(paquete)
+					elif tipo_paquete == 18:
+						print("No pertenece al Arbol")
 
+					else:
+						print("Es un paquete que no tiene sentido con el protocolo")
 
-
+	# TODO: ESTE ES GIGANTE
+	# TODO: NECESITAMOS ACOMODAR TODOS LOS MÉTODOS PARA QUE SIRVAN CON EL PACKAGE a_aPaq() EN VEZ DE CON EL ARREGLO DE BYTES.
 
 	def morir(self):
 		input_usuario = str(input("Digite D si desea matar al nodo azul: "))
@@ -292,62 +352,12 @@ class nodo_azul:
 		else:
 			self.pasar_chunk(paquete)
 
-
-	def analizar_peticiones(self):
-		while True:
-			if len(self.mensajes_procesar) != 0:
-				self.lock_mensajes_procesar.acquire()
-				paquete = self.mensajes_procesar.pop(0) # Saca el primer paquete
-				self.lock_mensajes_procesar.release()
-				contenido_paquete = int.from_bytes([paquete[0][0]], byteorder = 'big')
-				tipo_paquete = int.from_bytes([paquete[0][3]], byteorder = 'big') # Paquetes con la forma 0 (Datos UDP) -  SN - SN - TIPO
-				# "Switch" de tipo de paquete
-				if tipo_paquete == 0:
-					print("Es un paquete put chunk") #definimos que hacer con el paquete
-					self.switcher(paquete)
-				elif tipo_paquete == 1:
-					print("Es un paquete Hello")
-					self.recibir_hello(paquete)
-				elif tipo_paquete == 2:
-					print("Es un paquete Exists?")
-				elif tipo_paquete == 3:
-					print("Respuesta de Exists?")
-				elif tipo_paquete == 4:
-					print("Es un paquete Complete?")
-				elif tipo_paquete == 5:
-					print("Resuesta de Complete?")
-				elif tipo_paquete == 6:
-					print("Es un paquete Get")
-				elif tipo_paquete == 7:
-					print("Respuesta de Get")
-				elif tipo_paquete == 8:
-					print("Es un paquete Locate")
-				elif tipo_paquete == 9:
-					print("Respuesta de Locate")
-				elif tipo_paquete == 10:
-					print("Es un paquete delete")
-				elif tipo_paquete == 11:
-					print("Me preguntan si pertenesco al arbol generador")
-					self.check_if_tree(paquete)
-				elif tipo_paquete == 13:
-					print("Soy padre!")
-					self.newSon(paquete)
-				elif tipo_paquete == 12:
-					print("Si pertenece al Arbol")
-					if not self.InTree:
-						self.daddy(paquete)
-				elif tipo_paquete == 18:
-					print("No pertenece al Arbol")
-
-				else:
-					print("Es un paquete que no tiene sentido con el protocolo")
-
 	def recibir(self):
 		while True:
-			paquete , direccion = self.secure_udp.recibir()
-			self.lock_mensajes_procesar.acquire()
-			self.mensajes_procesar.append((paquete , direccion))
-			self.lock_lista_mensajes_recibidos.release()
+			paquete, direccion = self.secure_udp.recibir()
+			# self.lock_mensajes_procesar.acquire()
+			self.mensajes_procesar.append((paquete, direccion))
+			# self.lock_lista_mensajes_recibidos.release()
 			
 '''			
 def main():

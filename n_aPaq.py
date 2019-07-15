@@ -15,13 +15,13 @@ class n_aPaq:
         self.listaVecinos = lv
 
     def serialize(self):
-        paquete = struct.pack('bIHH15ph', self.categoria, self.sn, self.tipo,
+        paquete = struct.pack('BIHH15ph', self.categoria, self.sn, self.tipo,
                               self.posGrafo, self.ipAzul.encode(), self.puertoAzul)
         paquete = paquete + pickle.dumps(self.listaVecinos)
         return paquete
 
     def unserialize(self, byteP):
-        paquete = struct.unpack('bIHH15ph', byteP[:30])
+        paquete = struct.unpack('BIHH15ph', byteP[:30])
 
         self.categoria = paquete[0]
         self.sn = paquete[1]
@@ -46,7 +46,7 @@ class n_aPaq:
 
 
 # ----------------------------------------------------------
-
+'''
 # para puebas
 def main():
     pos1 = 30
@@ -87,3 +87,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''
