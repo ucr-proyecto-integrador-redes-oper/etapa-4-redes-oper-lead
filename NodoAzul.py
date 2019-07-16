@@ -21,7 +21,6 @@ class nodo_azul:
 		self.chunk_ID = 0
 		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
 		self.chunks_almacenados = []
-		self.RRvecino = 0 # para recordar cual fue el ultimo vecino q envie
 		# self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		# self.lock_lista_mensajes_enviados = Lock()
 		# self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
@@ -50,7 +49,7 @@ class nodo_azul:
 		t5 = threading.Thread(target=self.ConsoleInput)
 		t5.start()
 		self.peticion()
-		
+
 
 	###### COMUNICACION CON EL NARANJA	######
 
@@ -107,7 +106,7 @@ class nodo_azul:
 			self.mandar_hellos() # Solo entra cuando llego un paquete complete
 			if self.id_nodo == 0:#revisa si no es el nodo ROOT
 				self.InTree = True
-				
+
 		while self.InTree == False:#intenta ingresar al arbol generador
 			self.joinTree()
 			print("Pregunto si hay vecinos en el arbol")
@@ -146,7 +145,7 @@ class nodo_azul:
 					# "Switch" de tipo de paquete
 					if tipo_paquete == 0:
 						print("Es un paquete put chunk") #definimos que hacer con el paquete
-						self.switcher(paquete)
+						self.switcher(paquete,address)
 					elif tipo_paquete == 1:
 						print("Es un paquete Hello")
 						self.recibir_hello(paquete)
@@ -170,16 +169,16 @@ class nodo_azul:
 						print("Es un paquete delete")
 					elif tipo_paquete == 11:
 						print("Me preguntan si pertenesco al arbol generador")
-						self.check_if_tree(paquete)
+						self.check_if_tree(paquete,address)
 					elif tipo_paquete == 13:
 						print("Soy padre!")
-						self.newSon(paquete)
+						self.newSon(paquete,address)
 					elif tipo_paquete == 12:
 						print("Si pertenece al Arbol")
-						if not self.InTree:
-							self.daddy(paquete)
+						if not self.InTree:#revisa no estar ya en el arbol asi se evitan ciclos
+							self.daddy(paquete,address)
 					elif tipo_paquete == 18:
-						print("No pertenece al Arbol")
+						print("No pertenece al Arbol el vecino:",address)
 
 					else:
 						print("Es un paquete que no tiene sentido con el protocolo")
@@ -214,6 +213,7 @@ class nodo_azul:
 		#self.RRvecino = self.RRvecino+1
 		#random = rand.randrange(len(self.lista_vecinos))
 		#if self.lista_vecinos[random][]
+
 		print("Enviando Chunk")
 		#hay q iterar sobre los que pertenecen al grafo
 
@@ -221,35 +221,45 @@ class nodo_azul:
 
 	def mandar_hellos(self):
 		for vecino in self.lista_vecinos:
-			paquete = paquete = (1).to_bytes(1, byteorder = 'big')
-			paquete += (self.id_nodo).to_bytes(2, byteorder = 'big')
-			self.secure_udp.enviar(paquete, vecino[1][0], vecino[1][1])
 
-	def recibir_hello(self, paquete):
-		mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
+			paquete = a_aPaq(0,1,self.id_nodo,0,0,0)
+			paq = paquete.serialize()
+			address = (vecino[1][0], vecino[1][1])
+			self.mensajes_enviar.append(paq,address)
+			#paquete = paquete = (1).to_bytes(1, byteorder = 'big')
+			#paquete += (self.id_nodo).to_bytes(2, byteorder = 'big')
+			#self.secure_udp.send(paquete, vecino[1][0], vecino[1][1])
+
+	def recibir_hello(self, paquete,address):
+		#mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
+		paq = a_aPaq(0,0,0,0,0,0)
+		paq.unserialize(paquete)
+		mi_vecino = paq.greenID
 		for vecino in self.lista_vecinos:
 			if vecino[0] == mi_vecino:
+				vecino[1][0]=address[0]#registro Ip de vecino por si acaso el narnaja no lo habia mandado
+				vecino[1][1]=address[1]#registro port
 				vecino[2] = True
-		# Pone un true para saber que el vecino ya le mando hello
 
-	def clonar_chunk(self, paquete_chunk):
+
+	def clonar_chunk(self, paquete_chunk,address):
 		# Clona el paquete, guarda copia y lo pasa con Round Robin
-		paquete = a_aPaq(0,0,0,0,0)
+		paquete = a_aPaq(0,0,0,0,0,0)
 		paquete.unserialize(paquete_chunk)
 		self.chunks_almacenados.append((paquete.fileID, paquete.chunkID, paquete.payload))#Guardo en esta estructura los chunks #id de imagen,#id de chunk #chunk
-		self.aQuienEnvio(paquete_chunk)
+		self.aQuienEnvio(paquete_chunk,address)
 		print("Clonando, guardando y pasando chunck")
 
 	def guardar_chunk(self, paquete_chunk):
 		# Guarda el chunck en disco
-		paquete = a_aPaq(0,0,0,0,0)
+		paquete = a_aPaq(0,0,0,0,0,0)
 		paquete.unserialize(paquete_chunk)
 		self.chunks_almacenados.append((paquete.fileID, paquete.chunkID, paquete.payload))
 		print("Guardando chunck")
 
 	def borrar_chunk(self, paquete_chunk):
 		# Borra el chunck
-		paquete = a_aPaq(0,0,0,0,0)
+		paquete = a_aPaq(0,0,0,0,0,0)
 		paquete.unserialize(paquete_chunk)
 		#metodo para borrar de arreglo que tenemos
 		for chunk in self.chunks_almacenados:
@@ -267,38 +277,47 @@ class nodo_azul:
 	def joinTree(self):
 		# revisa si vecino es parte del arbol  preguntando a sus vecinos si pertenecen
 		print("Vecino es parte de arbol?")
+		paquete = a_aPaq(0,11,0,0,0,0)
+		paq = paquete.serialize()
 		#mando mensaje preguntando a mis vecinos
+
 		for vecino in self.lista_vecinos:
-			paquete = paquete = (11).to_bytes(1, byteorder = 'big')
-			paquete += (self.id_nodo).to_bytes(2, byteorder = 'big')
-			self.secure_udp.enviar(paquete, vecino[1][0], vecino[1][1])
+			address=(vecino[1][0], vecino[1][1])
+			self.mensajes_enviar.append((paq,address))
+			#self.secure_udp.send(paq, vecino[1][0], vecino[1][1])
 
 
-	def check_if_tree(self,paquete):
+	def check_if_tree(self,paquete,address):
 		# reviso si pertenesco a Arbol
-		vecino = a_aPaq(0,0,0,0,0)
+		vecino = a_aPaq(0,0,0,0,0,0)
 		vecino.unserialize(paquete)
 		id_vecino = int (vecino.fileID)
 
 		if(self.InTree):
 			print("Estoy en el arbol!")#envio mensaje diciendo que si tipo ido
+
+
 			for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
-					IDO = (12).to_bytes(1, byteorder = 'big')
-					IDO += (self.id_nodo).to_bytes(2, byteorder = 'big')
-					self.secure_udp.enviar(IDO, vecino[1][0], vecino[1][1])
+					paquete = a_aPaq(0,12,0,0,0,0)
+					IDO = paquete.serialize()
+					address=(vecino[1][0], vecino[1][1])
+					self.mensajes_enviar.append((IDO,address))
+					#self.secure_udp.send(IDO, vecino[1][0], vecino[1][1])
 		else:
 			print("No Estoy en el arbol!")#envia mensaje diciendo que no TIPO idonot
 			for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
-					IDONOT =  (18).to_bytes(1, byteorder = 'big')
-					IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
-					self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
+					paquete = a_aPaq(0,18,0,0,0,0)
+					address=(vecino[1][0], vecino[1][1])
+					IDONOT = paquete.serialize()
+					self.mensajes_enviar.append((IDONOT,address))
+					#self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
 
 	def newSon(self, paquete):
 		#si recibe un mensaje tipo daddy de un vecino que no se habia unido al arbol
 		print("Ahora este nodo es hijo mio")
-		vecino = a_aPaq(0,0,0,0,0)
+		vecino = a_aPaq(0,0,0,0,0,0)
 		vecino.unserialize(paquete)
 		id_vecino = int (vecino.fileID)
 
@@ -306,28 +325,37 @@ class nodo_azul:
 			if vecino[0] == id_vecino:
 				vecino[3] = True
 
-	def daddy(self, paquete):
+	def daddy(self, paquete,address):
 		#si un vecino es parte del arbol, elijo de menor ID y le mando un mensaje tipo daddy
 		print("Ahora este sera mi papi")
 		inTree=True
-		vecino = a_aPaq(0,0,0,0,0)
+		vecino = a_aPaq(0,0,0,0,0,0)
 		vecino.unserialize(paquete)
 		id_vecino = int (vecino.fileID)
+		paquete= a_aPaq(0,13,self.id_nodo,0,0,0)
+		daddy = paquete.serialize()
 		for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
-					IDONOT = IDONOT = (13).to_bytes(1, byteorder = 'big')
-					IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
-					self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
+					#IDONOT = IDONOT = (13).to_bytes(1, byteorder = 'big')
+					#IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
+					#self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
+					address = (vecino[1][0], vecino[1][1])
+					self.mensajes_enviar.append((daddy,address))
 					vecino[3]=True
 
 	###### COMUNICACION CON VERDES	######
-	def broadcast(self, objeto, tipo):#envia a vecinos que pertenescan al Arbol
+	def broadcast(self, tipo, green, file_id, chuck_id, payload, addprev):#envia a vecinos que pertenescan al Arbol
+		paquete = a_aPaq(0,tipo,green,file_id,chuck_id,payload)
+		paq = paquete.serialize()
 		for vecino in self.lista_vecinos:
 			if vecino[3]==True:
-				objeto = objeto = (tipo).to_bytes(1, byteorder = 'big')
-				objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
-				self.secure_udp.enviar(objeto, vecino[1][0], vecino[1][1])
-#hace falta q elimine el que le envio el mensaje original de donde vino
+				if vecino[1][0] != addprev[0] and vecino[1][1] != addprev[1]: #me aseguro de no enviar al vecino que me envio el broadcast original
+					#objeto = objeto = (tipo).to_bytes(1, byteorder = 'big')
+					#objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
+					#self.secure_udp.send(objeto, vecino[1][0], vecino[1][1])
+					address = (vecino[1][0], vecino[1][1])
+					self.mensajes_enviar.append(paq,address)
+#hace falta q elimine el que le envio el mensaje original de donde vino y pertenescan al grafo
 
 
 
@@ -349,7 +377,7 @@ class nodo_azul:
 				found = a_aPaq(7,verde,id_archivo,chunk[1],chunk[2])
 				#ip de verde donde esta?
 				#self.secure_udp.enviar(found.serialize(), IP_verde, puerto_Verde)
-		self.broadcast(objeto,paq.tipo)
+		self.broadcast(paq.tipo,0,0,0,0)
 		print("Obteniendo el objeto solicitado")
 
 	def existe_objeto(self, objeto):
@@ -370,17 +398,17 @@ class nodo_azul:
 		print("Eliminando chunks del grafo")
 
 
-	def switcher(self, paquete):
+	def switcher(self, paquete,address):
 	#define que hacer con un chunk
 		decision = self.rand.randrange(0, 5)
 		if decision == 1:
-			self.clonar_chunk(paquete)
+			self.clonar_chunk(paquete,address)
 		elif decision == 2:
-			self.guardar_chunk(paquete)
+			self.guardar_chunk(paquete,address)
 		elif decision == 3:
-			self.borrar_chunk(paquete)
+			self.borrar_chunk(paquete,address)
 		else:
-			self.pasar_chunk(paquete)
+			self.pasar_chunk(paquete,address)
 
 	def recibir(self):
 		while True:
@@ -392,7 +420,7 @@ class nodo_azul:
 
 	def ConsoleInput(self):
 		print("consoleinput")
-'''			
+'''
 def main():
 	ip = input("Digite el ip que va a usar el azul ")
 	puerto = int(input("Digite el puerto que va a usar el azul "))
@@ -400,7 +428,7 @@ def main():
 	puerto_naranja = int(input("Digite el puerto que va a usar el naranja "))
 	azul = nodo_azul(ip, puerto, ip_naranja, puerto_naranja) # ahi pasen lo que ocupen
 	azul.run()
-	
+
 	if __name__ == "__main__":
 		main()
 '''

@@ -9,9 +9,9 @@ class a_aPaq:
 		self.fileID = file_id
 		self.chunkID = chuck_id
 		self.payload = payload
-		
+
 	def serialize(self):
-		
+
 		if(self.tipo == 0):
 			paquete = struct.pack('!BBBHI', self.category, self.tipo, self.greenID, self.fileID, self.chunkID)
 			paquete = paquete + self.payload
@@ -48,7 +48,7 @@ class a_aPaq:
 		return paquete
 
 	def unserialize(self, byteP):
-		tipo = int.from_bytes(byteP[0:1], byteorder=('big'))
+		tipo = int.from_bytes(byteP[1:2], byteorder=('big'))
 		if(tipo == 0):  #PUT CHUNK
 			tam = len(byteP)
 			paquete = struct.unpack('!BBBHI', byteP[0:9])
@@ -62,7 +62,7 @@ class a_aPaq:
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
-			self.greenID = paquete[2]  # ID de nodo
+			self.greenID = paquete[2]  # ID de nodo q que envio
 		if(tipo == 2):  #EXISTS
 			paquete = struct.unpack('!BBBH', byteP[0:])
 			self.category = paquete[0]
@@ -125,25 +125,21 @@ class a_aPaq:
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
-			self.greenID = paquete[2]  # ID de Nodo
 
-		if(tipo == 13):  #Tenes una bendicion
+		if(tipo == 13):  #daddy Tenes una bendicion
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
-			self.greenID = paquete[2]  # ID de Nodo
 
 		if(tipo == 12):  #Si soy parte del arbol
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
-			self.greenID = paquete[2]  # ID de Nodo
 
 		if(tipo == 18):  #No soy parte del arbol
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
-			self.greenID = paquete[2]  # ID de Nodo
 
 		return self
 
@@ -156,7 +152,7 @@ def main():
 	with open("imagenes/hola.jpg", "rb") as binary_file:
 		data = binary_file.read()
 		print(data[1])
-	
+
 	chunk = data[0:1000] #no se si vamos a tomar 1KB como 1000 o 1024 bytes
 	naPaq = a_aPaq(0, 193, 3500, 8760000, chunk)
 
@@ -164,7 +160,7 @@ def main():
 
 	paqPrueba = a_aPaq(0,0,0,0,0)
 	paqPrueba.unserialize(paqueteS)
-	
+
 	print(paqPrueba.tipo)
 	print(paqPrueba.arg1)
 	print(paqPrueba.arg2)
