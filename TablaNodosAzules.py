@@ -6,6 +6,7 @@ class TablaNodosAzules:
         self.grafoNodosAzules = {}  # [key = node] = vecino
         self.nodosAzulesAddr = {}  # direcciones de nodos azules
         self.nodosDisponibles = []
+        self.cantidadAsignados = 0
         self.EMPTY_ADDRESS = ('0.0.0.0', -1)
         try:
             with open(dirGrafoAzul, newline='') as File:
@@ -16,6 +17,7 @@ class TablaNodosAzules:
         except IOError:
             print("Tabla Nodos Azules: Error Grafo Naranja: no puede encontrar el archivo %s" % (dirGrafoAzul))
             exit()
+        self.cantidadNodos = len(self.nodosDisponibles)
 
     def printGrafo(self):
         for i in self.grafoNodosAzules:
@@ -27,6 +29,13 @@ class TablaNodosAzules:
     def printNodosDisponibles(self):
         print(self.nodosDisponibles)
 
+    def getCantidadAsignados(self):
+        asignados = 0
+        for i in self.grafoNodosAzules.keys():
+            if self.estaAsignado(i):
+                asignados += 1
+        return asignados
+
     def marcarComoSolicitado(self, nodoSolicitado):
         self.nodosDisponibles.remove(nodoSolicitado)
 
@@ -37,15 +46,15 @@ class TablaNodosAzules:
     def write(self, nodoEscribir, tuplaDirecciones):
         # self.nodosDisponibles.remove(nodoEscribir)
         self.nodosAzulesAddr[nodoEscribir] = tuplaDirecciones
+        self.cantidadAsignados += 1
 
     def estaAsignado(self, nodoObjetivo):
         return nodoObjetivo in self.nodosAzulesAddr
 
     def getDirNodo(self, nodoObjetivo):
+        direccion = self.EMPTY_ADDRESS
         if self.estaAsignado(nodoObjetivo):
             direccion = self.nodosAzulesAddr[nodoObjetivo]
-        else:
-            direccion = self.EMPTY_ADDRESS
         return direccion
 
     def getListaVecinos(self, nodoObjetivo):
@@ -54,7 +63,7 @@ class TablaNodosAzules:
 
         for nodo in listaVecinos:
             if self.estaAsignado(nodo):
-                tuplaVecino = (nodo,) + self.getDirNodo(nodo)
+                tuplaVecino = (nodo, self.getDirNodo(nodo))
                 direccionVeciones.append(tuplaVecino)  # Tupla de IP con Puerto
         return direccionVeciones
 

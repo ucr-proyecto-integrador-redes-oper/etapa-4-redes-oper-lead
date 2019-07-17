@@ -57,8 +57,9 @@ class nodo_azul:
 		# Se arma paquete de peticion al nodo Naranja
 		peticion = n_aPaq(1, self.sn, 14, 0, self.ip, self.puerto,)
 		peticion = peticion.serialize()
+		address = (self.ip_naranja, self.puerto_naranja)
 		#paquete = (14).to_bytes(1, byteorder='big')
-		self.mensajes_enviar.append(peticion)
+		self.mensajes_enviar.append((peticion,address))
 		#self.secure_udp.send(peticion, self.ip_naranja, self.puerto_naranja)
 		# self.recibir_respuesta_peticion()
 
@@ -192,8 +193,8 @@ class nodo_azul:
 	def HiloEnviador(self):
 		while True:
 			if len(self.mensajes_enviar) > 0:
-				paquete = self.mensajes_enviar.pop(0)
-				self.secure_udp.send(paquete, self.ip_naranja, self.puerto_naranja)
+				paquete, address = self.mensajes_enviar.pop(0)
+				self.secure_udp.send(paquete, address[0], address[1])
 	# TODO: ESTE ES GIGANTE
 	# TODO: NECESITAMOS ACOMODAR TODOS LOS MÉTODOS PARA QUE SIRVAN CON EL PACKAGE a_aPaq() EN VEZ DE CON EL ARREGLO DE BYTES.
 

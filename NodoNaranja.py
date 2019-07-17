@@ -174,6 +174,7 @@ class NodoNaranja:
         MAX_NODOS_NARANJA = 3
         procesando_solicitud_azul = False
         graphComplete = False
+        workDone = False
         acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
         #print(acks)
         while True:
@@ -289,7 +290,7 @@ class NodoNaranja:
                               package.posGrafo)
 
                         direccion = (package.ipAzul, package.puertoAzul)
-                        self.tablaNodosAzules.write(package, direccion)
+                        self.tablaNodosAzules.write(package.posGrafo, direccion)
                         saved_packet = n_nPaq(0, self.SNRN, self.nodeID, package.origenNaranja, 's', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
                         self.SNRN = self.nextSNRN(self.SNRN)
                         saved_packet = saved_packet.serialize()
@@ -375,7 +376,7 @@ class NodoNaranja:
                     for i in self.routingTable.table:
                         if not i.getNode() == self.nodeID:
                             write_package = n_nPaq(0, self.SNRN, self.nodeID, i.getNode(), 'w', nodoSolicitado, str(ipAzul), puertoAzul, prioridad)
-                            write_package.imprimir()
+                            # write_package.imprimir()
                             write_package = write_package.serialize()
                             self.colaSalida.put(write_package)
                     self.blueNodesAsignedByMe[nodoSolicitado] = (str(ipAzul), puertoAzul)
@@ -395,7 +396,7 @@ class NodoNaranja:
 
 
 
-            if len(self.tablaNodosAzules.nodosDisponibles) == 0:
+            if len(self.tablaNodosAzules.nodosDisponibles) == 0 and not workDone and (self.tablaNodosAzules.cantidadAsignados == self.tablaNodosAzules.cantidadNodos):
                 # print("holi")
                 # todo: cuando la tabla de nodos azules se quede sin nodos disponibles significa que estamos a punto de completar el grafo. ESTA HECHO
                 # todo: asegurarnos de que no hayan solicitudes procesandose actualmente ni mias ni de nadie más. ESTA HECHO
@@ -409,13 +410,15 @@ class NodoNaranja:
                     for i in self.blueNodesAsignedByMe.keys():
                         respuesta_azul = n_aPaq(1, self.SNRN, 16, i, self.blueNodesAsignedByMe[i][0], self.blueNodesAsignedByMe[i][1], self.tablaNodosAzules.getListaVecinos(i))
                         self.SNRN = self.nextSNRN(self.SNRN)
+                        print(self.tablaNodosAzules.getListaVecinos(i))
                         respuesta_azul = respuesta_azul.serialize()
                         self.colaSalida.put(respuesta_azul)
-                        graphComplete = True
+                    graphComplete = True
 
-                if graphComplete and self.colaEntrada.empty() and self.colaSalida.empty():
+                if graphComplete and self.colaEntrada.empty() and self.colaSalida.empty() and not workDone:
                     for i in self.blueNodesAsignedByMe.keys():
                         paqGraphComplete = n_aPaq(1, self.SNRN, 17, i, self.blueNodesAsignedByMe[i][0], self.blueNodesAsignedByMe[i][1], self.tablaNodosAzules.getListaVecinos(i))
                         self.SNRN = self.nextSNRN(self.SNRN)
                         paqGraphComplete = paqGraphComplete.serialize()
                         self.colaSalida.put(paqGraphComplete)
+                    workDone = True
