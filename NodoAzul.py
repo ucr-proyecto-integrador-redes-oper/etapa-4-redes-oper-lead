@@ -261,15 +261,6 @@ class nodo_azul:
 	# TODO: ESTE ES GIGANTE
 	# TODO: NECESITAMOS ACOMODAR TODOS LOS MÉTODOS PARA QUE SIRVAN CON EL PACKAGE a_aPaq() EN VEZ DE CON EL ARREGLO DE BYTES.
 
-	def morir(self):
-		input_usuario = str(input("Digite D si desea matar al nodo azul: "))
-		if input_usuario == "D":
-			print("Bye")
-			sys.exit()
-		else:
-			print("Digito algo que no es una D")
-			self.morir()
-
 	###### COMUNICACION CON OTROS AZULES ######
 
 	def aQuienEnvio(self,chunk):###por round robin elijo a q vecino mandarlo
@@ -648,7 +639,8 @@ class nodo_azul:
 	Digite 3 si desea imprimir el ip del nodo azul
 	Digite 4 si desea imprimir el puerto del nodo azul
 	Digite 5 si desea imprimir el ip del nodo naranja
-	Digite 6 si desea imprimir el puerto del nodo naranja\n"""
+	Digite 6 si desea imprimir el puerto del nodo naranja
+	O bien digite 7 para matar al nodo azul\n"""
 			input_usuario = int(input(string_input))
 			if input_usuario == 1:
 				print("Lista vecinos: ", self.lista_vecinos)
@@ -662,6 +654,9 @@ class nodo_azul:
 				print("IP nodo naranja: ", self.ip_naranja)
 			elif input_usuario == 6:
 				print("Puerto del nodo naranja: ", self.puerto_naranja)
+			elif input_usuario == 7:
+				print("Matando nodo azul...")
+				sys.exit(0)
 			else:
 				print("Por favor ingrese una opcion valida")
 '''
