@@ -425,8 +425,29 @@ class nodo_azul:
 			self.mensajes_procesar.append((paquete, direccion))
 			# self.lock_lista_mensajes_recibidos.release()
 
-	def ConsoleInput(self):
-		print("consoleinput")
+	def ConsoleInput():
+		while True:
+			string_input = """Digite 1 si desea imprimir la lista de vecinos
+	Digite 2 si desea imprimir el ID del nodo
+	Digite 3 si desea imprimir el ip del nodo azul
+	Digite 4 si desea imprimir el puerto del nodo azul
+	Digite 5 si desea imprimir el ip del nodo naranja
+	Digite 6 si desea imprimir el puerto del nodo naranja\n"""
+			input_usuario = int(input(string_input))
+			if input_usuario == 1:
+				print("Lista vecinos: ", self.lista_vecinos)
+			elif input_usuario == 2:
+				print("ID del nodo: ", self.id_nodo)
+			elif input_usuario == 3:
+				print("IP del nodo azul: ", self.ip)
+			elif input_usuario == 4:
+				print("Puerto del nodo azul: ", self.puerto)
+			elif input_usuario == 5:
+				print("IP nodo naranja: ", self.ip_naranja)
+			elif input_usuario == 6:
+				print("Puerto del nodo naranja: ", self.puerto_naranja)
+			else:
+				print("Por favor ingrese una opcion valida")
 '''
 def main():
 	ip = input("Digite el ip que va a usar el azul ")
