@@ -57,7 +57,7 @@ class NodoNaranja:
     def run(self):
         for i in self.routingTable.table:
             if i.getNode() == self.nodeID:
-                print(i.print_data())
+                #print(i.print_data())
                 self.ip = i.getIp()
                 self.port = i.getPort()
         # server = (self.ip, self.port)
@@ -101,16 +101,16 @@ class NodoNaranja:
 
     def HiloRecibidor(self):
         while True:
-            print("estoy a punto de recibir un paquete en el hilo recibidor")
+            #print("estoy a punto de recibir un paquete en el hilo recibidor")
             payload, client_address = self.secure_UDP.recibir()  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
-            print("recibí el paquete: ", payload)
+            #print("recibí el paquete: ", payload)
             #payload, client_address = self.sock.recvfrom(1035)  # recibe 1035 bytes y la (direcciónIP, puerto) del origen
             tipo = int.from_bytes(payload[:1], byteorder=('little'))
             if tipo == 0:
                 # caso 1 narnja naranja
                 targetNode = int.from_bytes(payload[9:10], byteorder=('little'))  # destino
-                print("Es para: ", targetNode)
-                print("Yo soy: ", self.nodeID)
+                #print("Es para: ", targetNode)
+                #print("Yo soy: ", self.nodeID)
                 if targetNode == self.nodeID:
                     self.colaEntrada.put(payload)
                 # If not then just put it to the outputQueue
@@ -123,7 +123,7 @@ class NodoNaranja:
                 paquete.ipAzul = client_address[0]  # para poder responderle necesito la IP
                 paquete.puertoAzul = client_address[1]  # y el puerto
                 # sin embargo ambas cosas vienen con el mensaje que me mandó.
-                paquete.imprimir()
+                #paquete.imprimir()
                 payload = paquete.serialize()
                 self.colaEntrada.put(payload)
 
@@ -181,30 +181,30 @@ class NodoNaranja:
             #print("Entra al while True y espera en cola")
             if not self.colaEntrada.empty():
                 packet = self.colaEntrada.get()
-                print("Paquete obtenido en hilo logico")
+                #print("Paquete obtenido en hilo logico")
                 tipo = int.from_bytes(packet[:1], byteorder=('little'))
                 if tipo == 0:
-                    print("el paquete es naranja-naranja")
+                    #print("el paquete es naranja-naranja")
                     package = n_nPaq(0, self.nodeID, self.nodeID, self.nodeID, '', 0, "0.0.0.0", 5000, 0)
                     package = package.unserialize(packet)
-                    print(package.categoria, package.sn, package.origenNaranja, package.destinoNaranja, package.puertoAzul,
-                          package.ipAzul, str(package.tipo), package.posGrafo, package.prioridad)
+                    #print(package.categoria, package.sn, package.origenNaranja, package.destinoNaranja, package.puertoAzul,
+                    #      package.ipAzul, str(package.tipo), package.posGrafo, package.prioridad)
                     if package.tipo == b'r':  # Request de un pquete (solicitud)
-                        print("Packet request from: ", package.origenNaranja, " pidiendo el numero: ", package.posGrafo,
-                              " con la prioridad: ", package.prioridad)
+                        #print("Packet request from: ", package.origenNaranja, " pidiendo el numero: ", package.posGrafo,
+                        #      " con la prioridad: ", package.prioridad)
                         if package.posGrafo == nodoSolicitado:  # yo pedi ese mismo nodo y por tanto hay conflicto
                             if package.prioridad < prioridad:  # yo gano el conflicto
-                                print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
-                                      " Mi prioridad: ",
-                                      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
-                                      package.prioridad, ")")
+                                #print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID,
+                                #      " Mi prioridad: ",
+                                #      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ",
+                                #     package.prioridad, ")")
                                 negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
                                 negacion_bytes = negacion.serialize()
 
                                 self.colaSalida.put(negacion_bytes)
                             elif package.prioridad > prioridad:  # yo pierdo el conflicto
-                                print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
-                                      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
+                                #print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
+                                #      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
                                 accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
@@ -212,12 +212,12 @@ class NodoNaranja:
 
                                 self.colaSalida.put(accept_bytes)
                             else:  # empatamos con prioridad
-                                print("Empatamos la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID," Mi prioridad: ",
-                                      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
+                                #print("Empatamos la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID," Mi prioridad: ",
+                                #      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
                                 if self.nodeID > package.origenNaranja:  # lo resolvemos con ip y gano
-                                    print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
-                                          prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
+                                #    print("Gané la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
+                                #          prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
                                     negacion = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'd', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
@@ -226,17 +226,17 @@ class NodoNaranja:
                                     self.colaSalida.put(negacion_bytes)
 
                                 else:  # perdí por ip
-                                    print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
-                                          prioridad, ") (La ID del otro: ", package.origenNaranja," La prioridad del otro: ",
-                                          package.prioridad, ")")
+                                #   print("Perdí la batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
+                                #         prioridad, ") (La ID del otro: ", package.origenNaranja," La prioridad del otro: ",
+                                #         package.prioridad, ")")
                                     accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
 
                                     accept_bytes = accept.serialize()
 
                                     self.colaSalida.put(accept_bytes)
                         else:  # yo no pedí ese nodo
-                            print("No hay batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
-                                  prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
+                            #print("No hay batalla por el nodo ", nodoSolicitado, " (My ID: ", self.nodeID, " Mi prioridad: ",
+                            #      prioridad, ") (La ID del otro: ", package.origenNaranja, " La prioridad del otro: ", package.prioridad, ")")
 
                             self.tablaNodosAzules.marcarComoSolicitado(package.posGrafo)
                             accept = n_nPaq(0, package.sn, self.nodeID, package.origenNaranja, 'a', package.posGrafo, package.ipAzul, package.puertoAzul, package.prioridad)
@@ -248,14 +248,14 @@ class NodoNaranja:
 
                         if package.posGrafo == nodoSolicitado:
                             # agrega el ack al mapa de acks. lo voy a explicar arriba.
-                            print(self.diccionariosACKs)
+                            # print(self.diccionariosACKs)
                             if package.sn in self.diccionariosACKs:
                                 self.diccionariosACKs[package.sn][package.origenNaranja] = 'a' # del diccionario con llave = sn, en el lugar con llave origenNaranja, ponga el accept.
-                                print("EL ORIGEN NARANJA ES: ", package.origenNaranja)
-                                print(self.diccionariosACKs[package.sn][package.origenNaranja])
+                                #print("EL ORIGEN NARANJA ES: ", package.origenNaranja)
+                                #print(self.diccionariosACKs[package.sn][package.origenNaranja])
                             else:
                                 print("Es un ack de un paquete anterior al actual")
-                            print(self.diccionariosACKs)
+                            #print(self.diccionariosACKs)
                         #if len(self.diccionariosACKs[package.sn]) == MAX_NODOS_NARANJA - 1: #esto hay que cambiarlo porque creo que el diccionario siepmre va a tener 5 elementos
                             #acks_done = True
                             #print("recibi todos los acks de la petición: ", nodoSolicitado)
@@ -269,11 +269,11 @@ class NodoNaranja:
                             acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
                             nodoSolicitado = self.tablaNodosAzules.getNodoDisponible()
                             self.tablaNodosAzules.marcarComoSolicitado(nodoSolicitado)
-                            print("Dado que perdí el nodo: ", package.posGrafo, " me veo en la obligación de cambiar por: ", nodoSolicitado)
+                            # print("Dado que perdí el nodo: ", package.posGrafo, " me veo en la obligación de cambiar por: ", nodoSolicitado)
                             prioridad = self.rand.randrange(0, 4294967296)
                             self.diccionariosACKs[self.SNRN] = acks
-                            print(self.diccionariosACKs)
-                            print("Nodos disponibles ", end='')
+                            # print(self.diccionariosACKs)
+                            # print("Nodos disponibles ", end='')
                             self.tablaNodosAzules.printNodosDisponibles()
                             snSolicitud = self.SNRN
                             for i in self.routingTable.table:
@@ -310,24 +310,24 @@ class NodoNaranja:
 
                 elif tipo == 1:  # el paquete es naranja-azul # cuerpo del naranja-azul
                     if not procesando_solicitud_azul: # si no estoy procesando una solicitud azul entonces puedo proceder
-                        print("Comunicación naranja-azul")
+                        #print("Comunicación naranja-azul")
                         bluePacket = n_aPaq()
                         bluePacket = bluePacket.unserialize(packet)
-                        print("Paquete de tipo: ", bluePacket.tipo)
+                        #print("Paquete de tipo: ", bluePacket.tipo)
                         if bluePacket.tipo == 14:
                             # es un paquete de solicitud.
                             ipAzul = bluePacket.ipAzul
                             puertoAzul = bluePacket.puertoAzul
 
-                            print("Es un paquete de solicitud azul con IP: ", str(ipAzul), " y puerto: ", puertoAzul)
+                            #print("Es un paquete de solicitud azul con IP: ", str(ipAzul), " y puerto: ", puertoAzul)
                             nodoSolicitado = self.tablaNodosAzules.getNodoDisponible()
                             #nodoSolicitado = 4
                             #self.SNRN = 0
                             self.tablaNodosAzules.marcarComoSolicitado(nodoSolicitado)
-                            print("Nodo solicitado: ", nodoSolicitado)
+                            #print("Nodo solicitado: ", nodoSolicitado)
                             prioridad = self.rand.randrange(0, 4294967296)
                             self.diccionariosACKs[self.SNRN] = acks
-                            print(self.diccionariosACKs)
+                            # print(self.diccionariosACKs)
                             snSolicitud = self.SNRN
                             for i in self.routingTable.table:
                                 if not i.getNode() == self.nodeID:
@@ -351,7 +351,7 @@ class NodoNaranja:
 
 
                 if procesando_solicitud_azul:
-                    print("entré en procesando solicitud")
+                    # print("entré en procesando solicitud")
                     countingACKs = 0
                     for i in range(MAX_NODOS_NARANJA):
                         if not i == self.nodeID:
@@ -362,7 +362,7 @@ class NodoNaranja:
                 # print(self.diccionariosACKs)
                 print(ganeNodo)
                 if ganeNodo:
-                    print("entré en gané nodo")
+                    #print("entré en gané nodo")
                     vecinos_azules = []
                     for i in self.tablaNodosAzules.grafoNodosAzules[nodoSolicitado]:
                         vecinos_azules.append(i)
@@ -370,7 +370,7 @@ class NodoNaranja:
                     self.tablaNodosAzules.write(nodoSolicitado, (ipAzul, puertoAzul))
                     respuesta_azul = n_aPaq(1, self.SNRN, 15, nodoSolicitado, str(ipAzul), puertoAzul, vecinos_azules)
                     self.SNRN = self.nextSNRN(self.SNRN)
-                    respuesta_azul.imprimir()
+                    # respuesta_azul.imprimir()
                     respuesta_azul = respuesta_azul.serialize()
                     self.colaSalida.put(respuesta_azul)
                     for i in self.routingTable.table:
@@ -385,7 +385,7 @@ class NodoNaranja:
                     acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
 
                 if acks_Write_Done:
-                    print("entré en write acks done")
+                    #print("entré en write acks done")
                     procesando_solicitud_azul = False
                     nodoSolicitado = -1
                     ipAzul = '0.0.0.0'
@@ -410,7 +410,7 @@ class NodoNaranja:
                     for i in self.blueNodesAsignedByMe.keys():
                         respuesta_azul = n_aPaq(1, self.SNRN, 16, i, self.blueNodesAsignedByMe[i][0], self.blueNodesAsignedByMe[i][1], self.tablaNodosAzules.getListaVecinos(i))
                         self.SNRN = self.nextSNRN(self.SNRN)
-                        print(self.tablaNodosAzules.getListaVecinos(i))
+                        # print(self.tablaNodosAzules.getListaVecinos(i))
                         respuesta_azul = respuesta_azul.serialize()
                         self.colaSalida.put(respuesta_azul)
                     graphComplete = True

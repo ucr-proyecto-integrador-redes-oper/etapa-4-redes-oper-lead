@@ -51,8 +51,8 @@ class USL:
             aux = uslPaq()
             paquete = aux.unserialize(payload)
             #paquete.imprimir()
-            print("Mensaje Recibido de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
-                 "Proveniente de:", address)
+            #print("Mensaje Recibido de Tipo", paquete.tipo, "De SN=", paquete.sn, "Que contiene:", paquete.payload,
+            #     "Proveniente de:", address)
             if paquete.tipo == 0: # paquete de solicitud
                 client_ip = address[0] # ip
                 client_port = address[1] # puerto
@@ -65,7 +65,7 @@ class USL:
                 for package in self.cola_enviar:
                     if package.sn == paquete.sn:
                         self.cola_enviar.remove(package)
-                        print(len(self.cola_enviar))
+                        #print(len(self.cola_enviar))
             else:
                 print("se recibió un paquete de tipo erroneo")
 
@@ -91,7 +91,7 @@ class USL:
         return next
 
     def send(self, payload, ip, port):
-        print("entré a send: enviando paquete: ", payload, " a la ip: ", ip, " por el puerto: ", str(port))
+        #print("entré a send: enviando paquete: ", payload, " a la ip: ", ip, " por el puerto: ", str(port))
         paquete = uslPaq(0, self.SNRN, payload, ip, port)
         self.SNRN = self.nextSNRN(self.SNRN)
         self.cola_enviar.append(paquete)

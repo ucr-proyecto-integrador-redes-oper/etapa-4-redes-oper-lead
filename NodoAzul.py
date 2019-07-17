@@ -129,7 +129,7 @@ class nodo_azul:
 					package = package.unserialize(paquete)
 					tipo_paquete = package.tipo
 					if tipo_paquete == 15:
-						print("recibí un paquete de tipo 15 de parte del nodo: ", address[0], ":", address[1])
+						#print("recibí un paquete de tipo 15 de parte del nodo: ", address[0], ":", address[1])
 						self.id_nodo = package.posGrafo
 						self.lista_vecinos = package.listaVecinos
 					elif tipo_paquete == 16:
