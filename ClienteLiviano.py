@@ -47,14 +47,19 @@ while (b):
 		b = False
 
 referencia = dirArch + "/" + arrayArch[idArch]
+tamArch = os.path.getsize(referencia)
+numChunks = int(tamArch/1024)+1
 print(referencia)
+print(numChunks)
 
 #Se manda accion y ID del archivo al nodo verde
 
-if(accion == 1):
+if accion == 1:
 	paquete = struct.pack('!BH100s', accion, idArch, referencia.encode('ascii'))
-else:
+elif (accion == 2 or accion == 6):
 	paquete = struct.pack('!BH', accion, idArch)
+else:
+	paquete = struct.pack('!BHI',accion,idArch,numChunks)
 	
 sock.sendto(paquete, address)
 

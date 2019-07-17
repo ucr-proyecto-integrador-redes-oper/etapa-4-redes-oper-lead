@@ -1,6 +1,8 @@
 import socket
 import threading
 import struct
+import operator
+import csv
 from USL import USL
 from uslPaq import uslPaq
 from netifaces import interfaces, ifaddresses, AF_INET
@@ -26,6 +28,14 @@ class NodoVerde:
 		self.colaSalidaCliente = queue.Queue()
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.secure_udp = USL(self.ip, self.port, 5)
+		self.existe = False
+		self.complete = False
+		self.get = False
+		self.locate = False
+		self.listComplete = []
+		self.listLocate = []
+		self.listGet = []
+		self.numChunks = 0
 
 	def run(self):
 		server = (self.ip, self.port_cliente)
@@ -64,7 +74,7 @@ class NodoVerde:
 				tamArray = len(arrayChunks)
 				
 				for x in range(tamArray):
-					paqEnv = a_aPaq(0, self.my_id, idArch, x, arrayChunks[x])
+					paqEnv = a_aPaq(3, 0, self.my_id, idArch, x, arrayChunks[x])
 					bytesP = paqEnv.serialize()
 					self.colaSalida.put(bytesP)
 				
@@ -72,34 +82,44 @@ class NodoVerde:
 				
 			if (tipo == 2):
 				# caso Existe
-				paqEnv = a_aPaq(2, self.my_id, idArch, 0, 0)
+				self.existe = False
+				paqEnv = a_aPaq(3, 2, self.my_id, idArch, 0, 0)
 				bytesP = paqEnv.serialize()
-				self.colaSalida.put(bytesP)
-				
+				self.colaSalida.put(bytesP)				
 				
 			if (tipo == 3):
 				# caso Completo
-				paqEnv = a_aPaq(4, self.my_id, idArch, 0, 0)
+				paqB = struct.unpack('!I', payload[3:7])
+				self.numChunks = paqB[0]
+				self.complete = False
+				paqEnv = a_aPaq(3, 4, self.my_id, idArch, 0, 0)
 				bytesP = paqEnv.serialize()
 				self.colaSalida.put(bytesP)
 				
 			if (tipo == 4):
 				# caso Obtener
-				paqEnv = a_aPaq(6, self.my_id, idArch, 0, 0)
+				paqB = struct.unpack('!I', payload[3:7])
+				self.numChunks = paqB[0]
+				self.get = False
+				paqEnv = a_aPaq(3, 6, self.my_id, idArch, 0, 0)
 				bytesP = paqEnv.serialize()
 				self.colaSalida.put(bytesP)
 				
 			if (tipo == 5):
 				# caso Localizar
-				paqEnv = a_aPaq(8, self.my_id, idArch, 0, 0)
+				paqB = struct.unpack('!I', payload[3:7])
+				self.numChunks = paqB[0]
+				self.locate = False
+				paqEnv = a_aPaq(3, 8, self.my_id, idArch, 0, 0)
 				bytesP = paqEnv.serialize()
 				self.colaSalida.put(bytesP)
 				
 			if (tipo == 6):
 				# caso Eliminar
-				paqEnv = a_aPaq(10, self.my_id, idArch, 0, 0)
+				paqEnv = a_aPaq(3, 10, self.my_id, idArch, 0, 0)
 				bytesP = paqEnv.serialize()
 				self.colaSalida.put(bytesP)
+				self.colaSalidaCliente.put("Ya se mando a eliminar los chunks")
 				 
 			respuesta = self.colaSalidaCliente.get()
 			paqResp = struct.pack('!100s', respuesta.encode('ascii'))
@@ -108,31 +128,66 @@ class NodoVerde:
 	def HiloRecibidor(self):
 		while True:
 			payload , address = self.secure_udp.recibir()
-			aaPaq = a_aPaq(0,0,0,0,0)
+			aaPaq = a_aPaq()
 			aaPaq.unserialize(payload)
 			tipo = aaPaq.tipo
 			
-			if (tipo == 3): 
+			if (tipo == 3 and self.existe == False): 
 				# caso respuesta a EXISTS
 				resp = "El archivo que consulto si existe"
 				self.colaSalidaCliente.put(resp)
+				self.existe = True
 				
-			if (tipo == 5):
+			if (tipo == 5 and self.complete == False):
 				# caso respuesta a COMPLETE
-				resp = "El archivo que consulto si esta completo"
-				self.colaSalidaCliente.put(resp)
+				id_chunk = aaPaq.chunkID
+				agregar = True
+				for x in range(len(self.listComplete)):
+					if self.listComplete[x] == id_chunk:
+						agregar = False
+				if agregar:
+					self.listComplete.append(id_chunk)
 				
-			if (tipo == 7):
+				#hay que tener un timeout para devolver que no esta completo
+				#porque en este momento si no esta completo solo no contesta
+				#tambien en existe, get y locate si no lo logra
+				if len(self.listComplete) == self.numChunks:
+					self.complete = True
+					resp = "El archivo que consulto si esta completo"
+					self.colaSalidaCliente.put(resp)
+				
+			if (tipo == 7 and self.get == False):
 				# caso respuesta a GET
-				nombre = "temporal"
-				resp = "El archivo que consulto se guardo como " + nombre
-				self.colaSalidaCliente.put(resp)
+				id_chunk = aaPaq.chunkID
+				chunk = aaPaq.payload
+				agregar = True
 				
-			if (tipo == 9):
+				for x in range(len(self.listGet)):
+					if self.listGet[x][0] == id_chunk:
+						agregar = False
+				if agregar:
+					self.listGet.append((id_chunk,chunk))
+				
+				if len(self.listGet) == self.numChunks:
+					self.get = True
+					listGet.sort(key = operator.itemgetter(0))
+					self.union(self.listGet,aaPaq.fileID)
+				
+			if (tipo == 9 and self.locate == False):
 				# caso respuesta a LOCATE
-				nombreNodo = "Nodo temporal"
-				resp = "El archivo que consulto si existe en nodo " + nombreNodo
-				self.colaSalidaCliente.put(resp)
+				
+				id_nodo = aaPaq.chunkID
+				agregar = True
+				
+				for x in range(len(self.listLocate)):
+					if self.listLocate[x] == id_nodo:
+						agregar = False
+				if agregar:
+					self.listLocate.append(id_nodo)
+				
+				if len(self.listLocate) == self.numChunks:
+					self.locate = True
+					self.crearCSV(self.listLocate,aaPaq.fileID)
 
 	def HiloEnviador(self):
 		while True:
@@ -148,26 +203,47 @@ class NodoVerde:
 		#metodo para particionar archivos en chunks
 		#Devuelve un arreglo de chunks\
 		print(referencia)
-		#with open(referencia, "rb") as binary_file:
 		with open("imagenes/hola.jpg", "rb") as binary_file:
 			data = binary_file.read()
 		
 		tam = len(data)
-		tamArray = int(tam/1000)+1
+		tamArray = int(tam/1024)+1
 		arrayChunks = [None] * tamArray
 		i = 0
 		
 		for x in range(tamArray-1):
-			arrayChunks[x] = data[i:i+1000]
-			i += 1000;
+			arrayChunks[x] = data[i:i+1024]
+			i += 1024;
 		
 		arrayChunks[tamArray-1] = data[i:tam]
 		
 		return arrayChunks	
 		
-	def union(self, arrayChunks):
+	def union(self, arrayChunks, id_file):
 		#metodo para reconstruir un archivo
-		variableTemporal = 7878
+		data = bytearray()
+		for x in range(len(arrayChunks)):
+			data = data + arrayChunks[x][1]
+		
+		# Hay que cambiar manualmente el .jpg si es diferente formato
+		#nombre de archivo es 193-3.jpg si id nodo verde es 193 y id de archivo es 3
+		nombre = my_id + "-" + id_file + ".jpg"
+		with open(nombre, "wb") as binary_file:
+			binary_file.write(prueba)
+		
+		resp = "El archivo que pidio con GET se guardo como " + nombre
+		self.colaSalidaCliente.put(resp)
+		
+	def crearCSV(self,lista,id_file):
+		#metodo que crea un archivo csv de una lista de nodos
+		
+		nombre = my_id + '-' + id_file + '.csv'
+		with open(nombre, 'w') as csvFile:
+			writer = csv.writer(csvFile)
+			writer.writerows(lista)
+		csvFile.close()
+		resp = "Se creo un archivo CSV con el nombre " + nombre
+		self.colaSalidaCliente.put(resp)
 		
 	def seleccionNodoAzul(self): #por ahora esta hardcoded
 		#selecciona con cual nodo azul se va a comunicar
