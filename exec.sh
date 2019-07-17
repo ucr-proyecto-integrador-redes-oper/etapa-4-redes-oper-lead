@@ -1,26 +1,24 @@
 #!/bin/bash
-#para usarse ./exec.sh IP (id de narnaja papa q se va a hacer) (numero de azules)
+#para usarse ./exec.sh IP  (numero de azules) (puerto de nodo naranja)
 #si le sale que no tiene permiso le da chmod 755
 
 echo creando
 IP=$1
-id=$2
-cantidadAZULES=$3
+cantidadAZULES=$2
+PuertoN=$3
 
 
-echo "Ip:$IP ID naranja:$id Cantidad de Azules:$cantidadAZULES"
-
-python3 fastMain.py $id
+echo "Ip:$IP  Cantidad de Azules:$cantidadAZULES Puerto Naranja: $PuertoN "
 
 counter=0
-puerto=8888
-puertoN=8888
+puerto=7000
 until [ $counter -gt $cantidadAZULES ]
 do
 echo creo Nodo Azul numero: $counter
 ((counter++))
-((puerto=puerto+counter))
-gnome-terminal -- python3 FastmainAzul.py $ip $puerto $ip $puertoN
+((puerto++))
+echo $puerto
+gnome-terminal -- python3 FastmainAzul.py $IP $puerto $IP $puertoN
 
 done
 echo All done
