@@ -6,19 +6,19 @@ echo creando
 IP=$1
 cantidadAZULES=$2
 PuertoN=$3
+Puerto=$4
 
-
-echo "Ip:$IP  Cantidad de Azules:$cantidadAZULES Puerto Naranja: $PuertoN "
+echo "Ip:$IP  Cantidad de Azules:$cantidadAZULES Puerto Naranja: $PuertoN Puerto Azul inicial: $Puerto"
 
 counter=1
-puerto=7000
+
 until [ $counter -gt $cantidadAZULES ]
 do
 echo creo Nodo Azul numero: $counter
 ((counter++))
-((puerto++))
-echo $puerto
-gnome-terminal -- python3 FastmainAzul.py $IP $puerto $IP $puertoN
+((Puerto++))
+echo $Puerto
+gnome-terminal -- python3 FastmainAzul.py $IP $Puerto $IP $PuertoN
 
 done
 echo All done
