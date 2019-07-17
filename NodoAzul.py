@@ -20,6 +20,7 @@ class nodo_azul:
 		self.file_ID = 0
 		self.chunk_ID = 0
 		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
+		self.vecinoSaidHello = {} #diccionario [id] = bool saludó?
 		self.chunks_almacenados = []
 		# self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		# self.lock_lista_mensajes_enviados = Lock()
@@ -116,6 +117,7 @@ class nodo_azul:
 		'''
 
 	def analizar_peticiones(self):
+		saidHi = False
 		while True:
 			if len(self.mensajes_procesar) != 0:
 				#self.lock_mensajes_procesar.acquire()
@@ -132,11 +134,13 @@ class nodo_azul:
 						#print("recibí un paquete de tipo 15 de parte del nodo: ", address[0], ":", address[1])
 						self.id_nodo = package.posGrafo
 						self.lista_vecinos = package.listaVecinos
+						for i in self.lista_vecinos:
+							self.vecinoSaidHello[i] = False
 					elif tipo_paquete == 16:
 						if self.id_nodo == package.posGrafo:
 							print("Recibí mi lista de vecinos: ")
 							print(package.listaVecinos)
-							self.lista_vecinos = package.listaVecinos
+							self.lista_vecinos = package.listaVecinos # Es una tupla con una tupla: lista_vecinos[0] da el id, lista_vecinos[1] da la tupla de dirección.
 					elif tipo_paquete == 17:
 						self.graphComplete = True
 				elif categoria == 2 and self.graphComplete: # Paquete es azul-azul
@@ -190,6 +194,11 @@ class nodo_azul:
 					print("LLEGÓ UN MENSAJE DE CATEGORIA: ", categoria, " Y EL GRAFO ESTA EN ESTADO: ", self.graphComplete)
 					self.mensajes_procesar.append(paquete)
 
+			if self.graphComplete:
+				if not saidHi:
+					self.mandar_hellos()
+					saidHi = True
+
 	def HiloEnviador(self):
 		while True:
 			if len(self.mensajes_enviar) > 0:
@@ -222,25 +231,22 @@ class nodo_azul:
 
 	def mandar_hellos(self):
 		for vecino in self.lista_vecinos:
-
-			paquete = a_aPaq(0,1,self.id_nodo,0,0,0)
+			paquete = a_aPaq(2, 1, self.id_nodo, 0, 0, 0)
 			paq = paquete.serialize()
-			address = (vecino[1][0], vecino[1][1])
-			self.mensajes_enviar.append(paq,address)
+			address = (vecino[1])
+			self.mensajes_enviar.append((paq, address))
 			#paquete = paquete = (1).to_bytes(1, byteorder = 'big')
 			#paquete += (self.id_nodo).to_bytes(2, byteorder = 'big')
 			#self.secure_udp.send(paquete, vecino[1][0], vecino[1][1])
 
-	def recibir_hello(self, paquete,address):
+	def recibir_hello(self, paquete):
 		#mi_vecino = int.from_bytes([paquete[0][6], paquete[0][7]], byteorder = 'big')
-		paq = a_aPaq(0,0,0,0,0,0)
+		paq = a_aPaq()
 		paq.unserialize(paquete)
-		mi_vecino = paq.greenID
-		for vecino in self.lista_vecinos:
-			if vecino[0] == mi_vecino:
-				vecino[1][0]=address[0]#registro Ip de vecino por si acaso el narnaja no lo habia mandado
-				vecino[1][1]=address[1]#registro port
-				vecino[2] = True
+		for i in self.lista_vecinos:
+			if i[0] == paq.node_id:
+				self.vecinoSaidHello[paq.node_id] = True
+		print(self.vecinoSaidHello)
 
 
 	def clonar_chunk(self, paquete_chunk,address):
@@ -370,7 +376,7 @@ class nodo_azul:
 		paq = a_aPaq(0,0,0,0,0)
 		paq.unserialize(objeto)
 		tipo = paq.tipo
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 
 		for chunk in self.chunks_almacenados:
