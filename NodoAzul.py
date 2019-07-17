@@ -627,7 +627,7 @@ class nodo_azul:
 	def recibir(self):
 		while True:
 			paquete, direccion = self.secure_udp.recibir()
-			print("Paquete recibido: ", paquete)
+			# print("Paquete recibido: ", paquete)
 			# self.lock_mensajes_procesar.acquire()
 			self.mensajes_procesar.append((paquete, direccion))
 			# self.lock_lista_mensajes_recibidos.release()
