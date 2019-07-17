@@ -360,7 +360,7 @@ class NodoNaranja:
                             if countingACKs == MAX_NODOS_NARANJA-1:
                                 ganeNodo = True
                 # print(self.diccionariosACKs)
-                print(ganeNodo)
+                #print(ganeNodo)
                 if ganeNodo:
                     #print("entré en gané nodo")
                     vecinos_azules = []

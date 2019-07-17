@@ -4,8 +4,8 @@ import sys
 
 ipAzul = str(sys.argv[1])
 puertoAzul = int(sys.argv[2])
-ipNaranja = str(sys.argv[1])
-puertoNaranja = int(8888)
+ipNaranja = str(sys.argv[3])
+puertoNaranja = int(sys.argv[4])
 
 nodoazul = nodo_azul(ipAzul, puertoAzul, ipNaranja, puertoNaranja)
 nodoazul.run()
