@@ -200,7 +200,7 @@ class nodo_azul:
 					else:
 						print("Es un paquete que no tiene sentido con el protocolo")
 				elif categoria == 3 and self.graphComplete: # verde-azul
-# TODO: Aquí deberían ir las acciones verde-azul
+					# TODO: Aquí deberían ir las acciones verde-azul
 					print("Comunicación verde-azul")
 					self.ip_verde = address[0]
 					self.puerto_verde = address[1]
@@ -246,7 +246,7 @@ class nodo_azul:
 						print("Es un paquete que no tiene sentido con el protocolo")
 				else: # Si de casualidad llegó un paquete azul o verde antes de que la topología estuviera completa entonces lo regresa a la cola.
 					print("LLEGÓ UN MENSAJE DE CATEGORIA: ", categoria, " Y EL GRAFO ESTA EN ESTADO: ", self.graphComplete)
-					self.mensajes_procesar.append(paquete)
+					self.mensajes_procesar.append(paquete, address)
 
 			if self.graphComplete:
 				if not saidHi:
