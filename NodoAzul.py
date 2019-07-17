@@ -30,6 +30,9 @@ class nodo_azul:
 		self.id_nodo = -1
 		self.mensajes_procesar = []
 		self.mensajes_enviar = []
+		self.ip_verde = ''
+		self.puerto_verde = 0
+		self.id_nodo_verde_actual = 0
 		# self.lock_mensajes_procesar = Lock()
 		self.secure_udp = USL(self.ip, self.puerto, 5) # My ip, my port, my timeout
 		self.InTree = False #define si esta o no en el arbol
@@ -156,22 +159,31 @@ class nodo_azul:
 						self.recibir_hello(paquete)
 					elif tipo_paquete == 2:
 						print("Es un paquete Exists?")
+						self.existe_objeto(paquete)
 					elif tipo_paquete == 3:
 						print("Respuesta de Exists?")
+						self.resp_existe_objeto(paquete)
 					elif tipo_paquete == 4:
 						print("Es un paquete Complete?")
+						self.objeto_completo(paquete)
 					elif tipo_paquete == 5:
 						print("Resuesta de Complete?")
+						self.resp_objeto_completo(paquete)
 					elif tipo_paquete == 6:
 						print("Es un paquete Get")
+						self.obtener_objeto(paquete)
 					elif tipo_paquete == 7:
 						print("Respuesta de Get")
+						self.resp_obtener_objeto(paquete)
 					elif tipo_paquete == 8:
 						print("Es un paquete Locate")
+						self.localizar_objeto(paquete)
 					elif tipo_paquete == 9:
 						print("Respuesta de Locate")
+						self.resp_localizar_objeto(paquete)
 					elif tipo_paquete == 10:
 						print("Es un paquete delete")
+						self.eliminar_objeto(paquete)
 					elif tipo_paquete == 11:
 						print("Me preguntan si pertenesco al arbol generador")
 						self.check_if_tree(paquete,address)
@@ -188,8 +200,50 @@ class nodo_azul:
 					else:
 						print("Es un paquete que no tiene sentido con el protocolo")
 				elif categoria == 3 and self.graphComplete: # verde-azul
-					# TODO: Aquí deberían ir las acciones verde-azul
+# TODO: Aquí deberían ir las acciones verde-azul
 					print("Comunicación verde-azul")
+					self.ip_verde = address[0]
+					self.puerto_verde = address[1]
+					package = a_aPaq()
+					package = package.unserialize(paquete)
+					tipo_paquete = package.tipo
+					self.id_nodo_verde_actual = package.greenID
+					# "Switch" de tipo de paquete
+					if tipo_paquete == 0:
+						print("Es un paquete put chunk") #definimos que hacer con el paquete
+						self.depositar_objeto(paquete)
+					elif tipo_paquete == 1:
+						print("Es un paquete Hello")
+						self.recibir_hello(paquete)
+					elif tipo_paquete == 2:
+						print("Es un paquete Exists?")
+						self.existe_objeto(paquete)
+					elif tipo_paquete == 3:
+						print("Respuesta de Exists?")
+						self.resp_existe_objeto(paquete)
+					elif tipo_paquete == 4:
+						print("Es un paquete Complete?")
+						self.objeto_completo(paquete)
+					elif tipo_paquete == 5:
+						print("Resuesta de Complete?")
+						self.resp_objeto_completo(paquete)
+					elif tipo_paquete == 6:
+						print("Es un paquete Get")
+						self.obtener_objeto(paquete)
+					elif tipo_paquete == 7:
+						print("Respuesta de Get")
+						self.resp_obtener_objeto(paquete)
+					elif tipo_paquete == 8:
+						print("Es un paquete Locate")
+						self.localizar_objeto(paquete)
+					elif tipo_paquete == 9:
+						print("Respuesta de Locate")
+						self.resp_localizar_objeto(paquete)
+					elif tipo_paquete == 10:
+						print("Es un paquete delete")
+						self.eliminar_objeto(paquete)
+					else:
+						print("Es un paquete que no tiene sentido con el protocolo")
 				else: # Si de casualidad llegó un paquete azul o verde antes de que la topología estuviera completa entonces lo regresa a la cola.
 					print("LLEGÓ UN MENSAJE DE CATEGORIA: ", categoria, " Y EL GRAFO ESTA EN ESTADO: ", self.graphComplete)
 					self.mensajes_procesar.append(paquete)
@@ -363,47 +417,209 @@ class nodo_azul:
 					address = (vecino[1][0], vecino[1][1])
 					self.mensajes_enviar.append(paq,address)
 #hace falta q elimine el que le envio el mensaje original de donde vino y pertenescan al grafo
-
-
-
 	def depositar_objeto(self, objeto):
 		# Depositar objeto
 		self.switcher(objeto)
 		print("Depositando objeto")
 
-	def obtener_objeto(self, objeto):
-		# Hay que entregarle al cliente el objeto solicitado
-		paq = a_aPaq(0,0,0,0,0)
-		paq.unserialize(objeto)
-		tipo = paq.tipo
-		verde = paq.node_id
-		id_archivo = paq.fileID
-
-		for chunk in self.chunks_almacenados:
-			if chunk[0]==paq.fileID:
-				found = a_aPaq(7,verde,id_archivo,chunk[1],chunk[2])
-				#ip de verde donde esta?
-				#self.secure_udp.enviar(found.serialize(), IP_verde, puerto_Verde)
-		self.broadcast(paq.tipo,0,0,0,0)
-		print("Obteniendo el objeto solicitado")
-
 	def existe_objeto(self, objeto):
 		# Verifica si el objeto esta en el grafo
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+
+		if cat == 3:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(3,3,verde,id_archivo)
+					#mando que existe a nodo verde
+					self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		elif cat == 2:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(2,3,verde,id_archivo)
+					#aqui quiero devolver una respuesta de EXISTS al nodo azul principal
+					self.broadcast(found.serialize(),found.tipo)
+
+		#aqui quiero mandar el EXISTS? a los azules que en teoria faltan
+		sendAA = a_aPaq(2,2,verde,id_archivo)
+		objetoAA = sendAA.serialize()
+		self.broadcast(objetoAA,sendAA.tipo)
 		print("Determinando si existe el objeto en el grafo")
+
+	def resp_existe_objeto(self, objeto):
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+
+		if self.id_nodo_verde_actual == verde:
+			found = a_aPaq(3,3,verde,id_archivo)
+			#mando que existe a nodo verde
+			self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		else:
+			#aqui quiero mandar la respuesta al azul que lo necesita
+			sendAA = a_aPaq(2,3,verde,id_archivo)
+			objetoAA = sendAA.serialize()
+			self.broadcast(objetoAA,sendAA.tipo)
+
+		print("Respuesta a existe")
 
 	def objeto_completo(self, objeto):
 		# Verifica si el objeto es reeensamblable
 		# TIENE que verificar todos los azules
-		print("Verificando si el objeto es reensamblable")
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+
+		if cat == 3:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(3,5,verde,id_archivo,chunk[1])
+					#mando resp de complete a nodo verde
+					self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		elif cat == 2:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(2,5,verde,id_archivo,chunk[1])
+					#aqui quiero devolver una respuesta de COMPLETE al nodo azul principal
+					self.broadcast(found.serialize(),found.tipo)
+
+		#aqui quiero mandar el COMPLETE? a los azules que en teoria faltan
+		sendAA = a_aPaq(2,4,verde,id_archivo)
+		objetoAA = sendAA.serialize()
+		self.broadcast(objetoAA,sendAA.tipo)
+		print("Verificando si el objeto es reensamblable(COMPLETE)")
+
+	def resp_objeto_completo(self, objeto):
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+		id_chunk = paq.chunkID
+
+		if self.id_nodo_verde_actual == verde:
+			found = a_aPaq(3,5,verde,id_archivo,id_chunk)
+			#mando que existe este chunk a nodo verde
+			self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		else:
+			#aqui quiero mandar la respuesta al azul que lo necesita
+			sendAA = a_aPaq(2,5,verde,id_archivo,id_chunk)
+			objetoAA = sendAA.serialize()
+			self.broadcast(objetoAA,sendAA.tipo)
+		print("Respuesta a COMPLETE")
+
+	def obtener_objeto(self, objeto):
+		# Hay que entregarle al cliente el objeto solicitado
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+
+		if cat == 3:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(3,7,verde,id_archivo,chunk[1],chunk[2])
+					#mando chunk a nodo verde
+					self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		elif cat == 2:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(2,7,verde,id_archivo,chunk[1],chunk[2])
+					#aqui quiero devolver chunk al nodo azul principal
+					self.broadcast(found.serialize(),found.tipo)
+
+		#aqui quiero mandar el GET? a los azules que en teoria faltan
+		sendAA = a_aPaq(2,6,verde,id_archivo)
+		objetoAA = sendAA.serialize()
+		self.broadcast(objetoAA,sendAA.tipo)
+		print("Obteniendo el objeto solicitado")
+
+	def resp_obtener_objeto(self, objeto):
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+		id_chunk = paq.chunkID
+		chunk = paq.payload
+
+		if self.id_nodo_verde_actual == verde:
+			found = a_aPaq(3,7,verde,id_archivo,id_chunk,chunk)
+			#mando chunk a nodo verde
+			self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		else:
+			#aqui quiero mandar la respuesta al azul que lo necesita
+			sendAA = a_aPaq(2,7,verde,id_archivo,id_chunk,chunk)
+			objetoAA = sendAA.serialize()
+			self.broadcast(objetoAA,sendAA.tipo)
+		print("Respuesta a Obtener")
 
 	def localizar_objeto(self, objeto):
 		# Devuelve un archivo CSV con todos los nodos que tengan chunks del objeto
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+
+		if cat == 3:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(3,9,verde,id_archivo,self.id_nodo)
+					#mando que resp de localizar a nodo verde
+					self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		elif cat == 2:
+			for chunk in self.chunks_almacenados:
+				if chunk[0] == id_archivo:
+					found = a_aPaq(2,9,verde,id_archivo,self.id_nodo)
+					#aqui quiero devolver una respuesta de LOCATE al nodo azul principal
+					self.broadcast(found.serialize(),found.tipo)
+
+		#aqui quiero mandar el LOCATE? a los azules que en teoria faltan
+		sendAA = a_aPaq(2,8,verde,id_archivo)
+		objetoAA = sendAA.serialize()
+		self.broadcast(objetoAA,sendAA.tipo)
 		print("Armando archivo CSV...")
+
+	def resp_localizar_objeto(self, objeto):
+		paq = a_aPaq()
+		paq.unserialize(objeto)
+		cat = paq.category
+		verde = paq.greenID
+		id_archivo = paq.fileID
+		id_nodo = paq.chunkID
+
+		if self.id_nodo_verde_actual == verde:
+			found = a_aPaq(3,9,verde,id_archivo,id_nodo)
+			#mando id de nodo a nodo verde
+			self.secure_udp.enviar(found.serialize(), self.ip_verde, self.puerto_verde)
+		else:
+			#aqui quiero mandar la respuesta al azul que lo necesita
+			sendAA = a_aPaq(2,9,verde,id_archivo,id_nodo)
+			objetoAA = sendAA.serialize()
+			self.broadcast(objetoAA,sendAA.tipo)
+		print("Respuesta a LOCATE")
 
 	def eliminar_objeto(self, objeto):
 		# Elimina los chunks del grafo
-		print("Eliminando chunks del grafo")
+		paquete = a_aPaq()
+		paquete.unserialize(objeto)
+		#metodo para borrar todos los chunks con id igual a fileID
+		for chunk in self.chunks_almacenados:
+			if chunk[0] == paquete.fileID:
+				self.chunks_almacenados.remove(chunk)
 
+		#aqui quiero mandar DELETE a todos los azules
+		self.broadcast(objeto,10)
+		print("Eliminando chunks del grafo")
 
 	def switcher(self, paquete,address):
 	#define que hacer con un chunk
