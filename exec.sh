@@ -10,7 +10,7 @@ PuertoN=$3
 
 echo "Ip:$IP  Cantidad de Azules:$cantidadAZULES Puerto Naranja: $PuertoN "
 
-counter=0
+counter=1
 puerto=7000
 until [ $counter -gt $cantidadAZULES ]
 do
