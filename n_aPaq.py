@@ -5,7 +5,7 @@ import pickle
 
 class n_aPaq:
 
-    def __init__(self, cat, s, tipo, pos, ip, puerto, lv):
+    def __init__(self, cat = 1, s = 0, tipo = 0, pos = 0, ip = '0.0.0.0', puerto = 0000, lv = [0,0]):
         self.categoria = cat
         self.sn = s
         self.tipo = tipo
@@ -15,22 +15,23 @@ class n_aPaq:
         self.listaVecinos = lv
 
     def serialize(self):
-        paquete = struct.pack('bIch15ph', self.categoria, self.sn, self.tipo,
+        paquete = struct.pack('BIHH15ph', self.categoria, self.sn, self.tipo,
                               self.posGrafo, self.ipAzul.encode(), self.puertoAzul)
         paquete = paquete + pickle.dumps(self.listaVecinos)
         return paquete
 
     def unserialize(self, byteP):
-        paquete = struct.unpack('bIch15ph', byteP[:30])
+        paquete = struct.unpack('BIHH15ph', byteP[:30])
 
         self.categoria = paquete[0]
         self.sn = paquete[1]
         self.tipo = paquete[2]
         self.posGrafo = paquete[3]
-        self.ipAzul = paquete[4]
+        self.ipAzul = paquete[4].decode("utf-8")
         self.puertoAzul = paquete[5]
 
         self.listaVecinos = list(pickle.loads(byteP[30:]))
+        return self
 
     def imprimir(self):
         print("---Contenido del Paquete---")
@@ -45,7 +46,7 @@ class n_aPaq:
 
 
 # ----------------------------------------------------------
-
+'''
 # para puebas
 def main():
     pos1 = 30
@@ -86,3 +87,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''
