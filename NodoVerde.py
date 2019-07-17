@@ -70,7 +70,6 @@ class NodoVerde:
 				paqDep = struct.unpack('!100s', payload[3:])
 				referencia = paqDep[0].decode()
 				arrayChunks = self.particionar(referencia)
-				self.union(arrayChunks)
 				tamArray = len(arrayChunks)
 				
 				for x in range(tamArray):
