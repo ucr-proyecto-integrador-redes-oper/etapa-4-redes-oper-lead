@@ -641,7 +641,7 @@ class nodo_azul:
 			self.mensajes_procesar.append((paquete, direccion))
 			# self.lock_lista_mensajes_recibidos.release()
 
-	def ConsoleInput():
+	def ConsoleInput(self):
 		while True:
 			string_input = """Digite 1 si desea imprimir la lista de vecinos
 	Digite 2 si desea imprimir el ID del nodo
