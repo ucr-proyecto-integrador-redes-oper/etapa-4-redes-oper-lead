@@ -252,7 +252,7 @@ class nodo_azul:
 						print("Es un paquete que no tiene sentido con el protocolo")
 				else: # Si de casualidad llegó un paquete azul o verde antes de que la topología estuviera completa entonces lo regresa a la cola.
 					print("LLEGÓ UN MENSAJE DE CATEGORIA: ", categoria, " Y EL GRAFO ESTA EN ESTADO: ", self.graphComplete)
-					self.mensajes_procesar.append(paquete, address)
+					self.mensajes_procesar.append((paquete, address))
 
 			if self.graphComplete:
 				if not saidHi:
