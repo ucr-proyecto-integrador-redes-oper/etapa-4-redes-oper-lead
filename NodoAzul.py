@@ -21,7 +21,9 @@ class nodo_azul:
 		self.chunk_ID = 0
 		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
 		self.vecinoSaidHello = {} #diccionario [id] = bool saludó?
-		self.lista_vecinos_arbol = []
+		self.lista_vecinos_arbol = [] 
+		self.iDos_iDoNots = []
+		self.lock_iDos_iDoNots = Lock()
 		self.chunks_almacenados = []
 		# self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		# self.lock_lista_mensajes_enviados = Lock()
@@ -54,6 +56,9 @@ class nodo_azul:
 		t5 = threading.Thread(target=self.ConsoleInput)
 		t5.start()
 		self.peticion()
+		self.joinTree()
+		t6 = threading.Thread(target=self.revisar_IDos_IDoNots)
+		t6.start()
 
 
 	###### COMUNICACION CON EL NARANJA	######
@@ -119,7 +124,29 @@ class nodo_azul:
 			print(self.lista_vecinos)
 			time.sleep(2)
 		'''
-
+	def revisar_IDos_IDoNots(self):
+		vecino_arbol = False
+		while vecino_arbol == False:
+			self.lock_iDos_iDoNots.acquire()
+			if len(iDos_iDoNots) != len(lista_vecinos):
+				print("NO han llegado suficientes mensajes!") # Me duermo 1 segundo, espero, para no preguntar tan seguido
+			else: # Miden los mismo, tengo la respuesta de todos
+				todos_iDoNot = True;
+				for paquete in self.iDos_iDoNots: # Son tuplas de la forma (paquete , (IP , Puerto))
+					tipo_paquete = paquete[0].tipo
+					if tipo_paquete == 12: # I DO 
+						todos_iDoNot = False
+						
+				if todos_iDoNot == True: # Borrar la lista, ninguno pertenece al arbol
+					self.iDos_iDoNots[:] = []  # Esto borra toda la lista
+					self.lock_iDos_iDoNots.release()
+					self.joinTree() # Vuelvo a mandar el joinTree para obtener mas iDo o iDoNot
+					time.sleep(2) # Me duermo 2 segundos
+					
+				else: # Si hay alguien que pertenece al arbol
+					print("Tengo que buscar la menor y hacerlo mi tata")
+				
+				
 	def analizar_peticiones(self):
 		saidHi = False
 		while True:
@@ -191,11 +218,17 @@ class nodo_azul:
 					elif tipo_paquete == 13:
 						print("Soy padre!")
 						self.newSon(paquete,address)
-					elif tipo_paquete == 12:
+					elif tipo_paquete == 12: #IDO
 						print("Si pertenece al Arbol")
-						if not self.InTree:#revisa no estar ya en el arbol asi se evitan ciclos
-							self.daddy(paquete,address)
-					elif tipo_paquete == 18:
+						self.lock_iDos_iDoNots.acquire()
+						self.iDos_iDoNots.append((package, address))
+						self.lock_iDos_iDoNots.release()
+						#if not self.InTree:#revisa no estar ya en el arbol asi se evitan ciclos
+							#self.daddy(paquete,address)
+					elif tipo_paquete == 18: #IDONOT
+						self.lock_iDos_iDoNots.acquire()
+						self.iDos_iDoNots.append((package, address))
+						self.lock_iDos_iDoNots.release()
 						print("No pertenece al Arbol el vecino:",address)
 
 					else:
@@ -332,9 +365,8 @@ class nodo_azul:
 		print("Vecino es parte de arbol?")
 		paquete = a_aPaq(0,11,0,0,0,0)
 		paq = paquete.serialize()
-		#mando mensaje preguntando a mis vecinos
 
-		for vecino in self.lista_vecinos:
+		for vecino in self.lista_vecinos: # Mando un mensaje a todos mis vecinos
 			address=(vecino[1][0], vecino[1][1])
 			self.mensajes_enviar.append((paq,address))
 			#self.secure_udp.send(paq, vecino[1][0], vecino[1][1])
