@@ -40,6 +40,7 @@ class nodo_azul:
 		self.secure_udp = USL(self.ip, self.puerto, 5) # My ip, my port, my timeout
 		self.InTree = False #define si esta o no en el arbol
 		self.graphComplete = False
+		self.everyoneSaidHi = False
 ##RUN###
 	def run(self):
 		# naranja Azul -> Azul Azul
@@ -56,9 +57,6 @@ class nodo_azul:
 		t5 = threading.Thread(target=self.ConsoleInput)
 		t5.start()
 		self.peticion()
-		self.joinTree()
-		t6 = threading.Thread(target=self.revisar_IDos_IDoNots)
-		t6.start()
 
 
 	###### COMUNICACION CON EL NARANJA	######
@@ -128,10 +126,10 @@ class nodo_azul:
 		vecino_arbol = False
 		while vecino_arbol == False:
 			self.lock_iDos_iDoNots.acquire()
-			if len(iDos_iDoNots) != len(lista_vecinos):
+			if len(self.iDos_iDoNots) != len(self.lista_vecinos):
 				print("NO han llegado suficientes mensajes!") # Me duermo 1 segundo, espero, para no preguntar tan seguido
 			else: # Miden los mismo, tengo la respuesta de todos
-				todos_iDoNot = True;
+				todos_iDoNot = True
 				for paquete in self.iDos_iDoNots: # Son tuplas de la forma (paquete , (IP , Puerto))
 					tipo_paquete = paquete[0].tipo
 					if tipo_paquete == 12: # I DO 
@@ -140,8 +138,9 @@ class nodo_azul:
 				if todos_iDoNot == True: # Borrar la lista, ninguno pertenece al arbol
 					self.iDos_iDoNots[:] = []  # Esto borra toda la lista
 					self.lock_iDos_iDoNots.release()
-					self.joinTree() # Vuelvo a mandar el joinTree para obtener mas iDo o iDoNot
-					time.sleep(2) # Me duermo 2 segundos
+					time.sleep(2)  # Me duermo 2 segundos
+					if not self.InTree:
+						self.joinTree() # Vuelvo a mandar el joinTree para obtener mas iDo o iDoNot
 					
 				else: # Si hay alguien que pertenece al arbol
 					print("Tengo que buscar la menor y hacerlo mi tata")
@@ -149,6 +148,7 @@ class nodo_azul:
 				
 	def analizar_peticiones(self):
 		saidHi = False
+		triedToJoinTree = False
 		while True:
 			if len(self.mensajes_procesar) != 0:
 				#self.lock_mensajes_procesar.acquire()
@@ -217,7 +217,7 @@ class nodo_azul:
 						self.check_if_tree(paquete,address)
 					elif tipo_paquete == 13:
 						print("Soy padre!")
-						self.newSon(paquete,address)
+						self.newSon(paquete)
 					elif tipo_paquete == 12: #IDO
 						print("Si pertenece al Arbol")
 						self.lock_iDos_iDoNots.acquire()
@@ -286,6 +286,20 @@ class nodo_azul:
 				if not saidHi:
 					self.mandar_hellos()
 					saidHi = True
+
+				if not self.everyoneSaidHi:
+					contador = 0
+					for vecino in self.vecinoSaidHello.keys():
+						if self.vecinoSaidHello[vecino]:
+							contador += 1
+					if contador == len(self.lista_vecinos):
+						self.everyoneSaidHi = True
+
+				if saidHi and not self.InTree and self.everyoneSaidHi and not triedToJoinTree:
+					t6 = threading.Thread(target=self.revisar_IDos_IDoNots)
+					t6.start()
+					self.joinTree()
+					triedToJoinTree = True
 
 	def HiloEnviador(self):
 		while True:
