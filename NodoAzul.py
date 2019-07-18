@@ -145,12 +145,6 @@ class nodo_azul:
 							print("Recibí mi lista de vecinos: ")
 							print(package.listaVecinos)
 							self.lista_vecinos = package.listaVecinos # Es una tupla con una tupla: lista_vecinos[0] da el id, lista_vecinos[1] da la tupla de dirección.
-							for vecino in self.lista_vecinos:
-								self.lista_vecinos.remove(vecino)
-								mi_id = vecino[0]
-								direccion = vecino[1] # (IP, Puerto)
-								self.lista_vecinos.append((mi_id, direccion, False)) # Para arbol generador
-								print("Lista despues de agregar el false: ", self.lista_vecinos)
 					elif tipo_paquete == 17:
 						self.graphComplete = True
 				elif categoria == 2 and self.graphComplete: # Paquete es azul-azul
