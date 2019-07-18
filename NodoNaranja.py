@@ -1,4 +1,3 @@
-import socket
 import threading
 import random
 import time
@@ -7,7 +6,6 @@ from TablaNodosAzules import TablaNodosAzules
 from n_nPaq import n_nPaq
 from n_aPaq import n_aPaq
 from USL import USL
-from netifaces import interfaces, ifaddresses, AF_INET
 
 # El diccionario de acks funciona así: tengo un conjunto de espacios igual a la cantidad de nodos naranja que hayan.
 # Si tengo 5 nodos naranjas entonces tengo 5 espacios en el diccionario. Las llaves son el id del nodo naranja.
@@ -17,10 +15,6 @@ from netifaces import interfaces, ifaddresses, AF_INET
 # Para manejar varios azules al mismo tiempo entonces hacemos un self.diccionariosAck = {} (diccionario de diccionarios)
 # Donde el keyword del diccionario de diccionarios es el SNRN del paquete. Así con el SNRN podemos accesar a la
 # solicitud correcta y marcar como ack'ed el source para dicha petición.
-
-# todo: procesamiento de acks y que hacer cuando los tengo todos listos. ESTA HECHO
-# todo: timeout para el hilo enviador. ESTA HECHO
-# todo: revisar todos en el fondo del documento
 
 try:
     import queue
@@ -33,12 +27,10 @@ class NodoNaranja:
     # Aqui se ponen los detalles para ajusta puerto y IP
     def __init__(self, routingTableDir, dirGrafoAzul, timeout, ID):
         self.rand = random
-        #self.ip = ifaddresses(interfaces()[1])[AF_INET].pop(0)['addr']
         self.ip = '0.0.0.0'
         self.routingTable = RoutingTable(routingTableDir)
         self.colaEntrada = queue.Queue()
         self.colaSalida = queue.Queue()
-        #self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.diccionariosACKs = {} # { SNRN_1:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_2:{1:'', 2:'', 3:'', 4:'', 5:''}, SNRN_N:{1:'', 2:'', 3:'', 4:'', 5:''}}
         self.SNRN = self.rand.randrange(65536)
         self.secure_UDP = 0
@@ -60,7 +52,6 @@ class NodoNaranja:
                 #print(i.print_data())
                 self.ip = i.getIp()
                 self.port = i.getPort()
-        # server = (self.ip, self.port)
         self.secure_UDP = USL(self.ip, self.port, self.TIMEOUT)
         t6= threading.Thread(target=self.secure_UDP.run)
         t6.start()
@@ -68,9 +59,6 @@ class NodoNaranja:
         t = threading.Thread(target=self.HiloRecibidor)
         t.start()
         # print("hilo recibidor iniciado")
-        #t2 = threading.Thread(target=self.HiloRecibidorAzul)
-        #t2.start()
-        #print("hilo recibidor azul iniciado")
         # hilo timeouts
         t3 = threading.Thread(target=self.HiloTimeOuts)
         t3.start()
@@ -178,7 +166,6 @@ class NodoNaranja:
         acks = self.clearAcks(acks, MAX_NODOS_NARANJA)
         #print(acks)
         while True:
-            #print("Entra al while True y espera en cola")
             if not self.colaEntrada.empty():
                 packet = self.colaEntrada.get()
                 #print("Paquete obtenido en hilo logico")
@@ -369,7 +356,7 @@ class NodoNaranja:
                     vecinos_azules = []
                     for i in self.tablaNodosAzules.grafoNodosAzules[nodoSolicitado]:
                         vecinos_azules.append(i)
-                    print(vecinos_azules)
+                    # print(vecinos_azules)
                     self.tablaNodosAzules.write(nodoSolicitado, (ipAzul, puertoAzul))
                     respuesta_azul = n_aPaq(1, self.SNRN, 15, nodoSolicitado, str(ipAzul), puertoAzul, vecinos_azules)
                     self.SNRN = self.nextSNRN(self.SNRN)
@@ -400,15 +387,6 @@ class NodoNaranja:
 
 
             if len(self.tablaNodosAzules.nodosDisponibles) == 0 and not workDone and (self.tablaNodosAzules.cantidadAsignados == self.tablaNodosAzules.cantidadNodos):
-                # print("holi")
-                # todo: cuando la tabla de nodos azules se quede sin nodos disponibles significa que estamos a punto de completar el grafo. ESTA HECHO
-                # todo: asegurarnos de que no hayan solicitudes procesandose actualmente ni mias ni de nadie más. ESTA HECHO
-                # todo: esto implica que las cola estén vacía y no este procesando nodos azules. ESTA HECHO
-                # todo: hay que enviarle entonces a los azules sus listas de vecinos completas con las respectivas direcciones IP. ESTA HECHO
-                # todo: esto implica hacer paquetes de tipo 16 y enviarlos a mis azules. ESTA HECHO
-                # todo: una vez verificado que esté realmente completo, se envía el paquete de que ya está lista la topología y así el azul puede comenzar a trabajar. ESTA HECHO
-                # todo: lo anterior es un paquete de tipo 17 (graph complete). ESTA HECHO
-
                 if not procesando_solicitud_azul and not graphComplete and self.colaEntrada.empty() and self.colaSalida.empty():
                     for i in self.blueNodesAsignedByMe.keys():
                         respuesta_azul = n_aPaq(1, self.SNRN, 16, i, self.blueNodesAsignedByMe[i][0], self.blueNodesAsignedByMe[i][1], self.tablaNodosAzules.getListaVecinos(i))
