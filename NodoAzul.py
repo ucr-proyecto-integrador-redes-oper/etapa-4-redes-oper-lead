@@ -144,6 +144,12 @@ class nodo_azul:
 							print("Recibí mi lista de vecinos: ")
 							print(package.listaVecinos)
 							self.lista_vecinos = package.listaVecinos # Es una tupla con una tupla: lista_vecinos[0] da el id, lista_vecinos[1] da la tupla de dirección.
+							for vecino in self.lista_vecinos:
+								self.lista_vecinos.remove(vecino)
+								mi_id = vecino[0]
+								direccion = vecino[1] # (IP, Puerto)
+								self.lista_vecinos.append((mi_id, direccion, False)) # Para arbol generador
+								print("Lista despues de agregar el false: ", self.lista_vecinos)
 					elif tipo_paquete == 17:
 						self.graphComplete = True
 				elif categoria == 2 and self.graphComplete: # Paquete es azul-azul
@@ -375,7 +381,10 @@ class nodo_azul:
 
 		for vecino in self.lista_vecinos:
 			if vecino[0] == id_vecino:
-				vecino[3] = True
+				self.lista_vecinos.remove(vecino)
+				nodo_id = vecino[0]
+				direccion = vecino[1]
+				self.lista_vecinos.append((nodo_id, direccion, True))
 
 	def daddy(self, paquete,address):
 		#si un vecino es parte del arbol, elijo de menor ID y le mando un mensaje tipo daddy
@@ -393,14 +402,17 @@ class nodo_azul:
 					#self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
 					address = (vecino[1][0], vecino[1][1])
 					self.mensajes_enviar.append((daddy,address))
-					vecino[3]=True
+					self.lista_vecinos.remove(vecino)
+					nodo_id = vecino[0]
+					direccion = vecino[1]
+					self.lista_vecinos.append((nodo_id, direccion, True))
 
 	###### COMUNICACION CON VERDES	######
 	def broadcast(self, tipo, green, file_id, chuck_id, payload, addprev):#envia a vecinos que pertenescan al Arbol
 		paquete = a_aPaq(0,tipo,green,file_id,chuck_id,payload)
 		paq = paquete.serialize()
 		for vecino in self.lista_vecinos:
-			if vecino[3]==True:
+			if vecino[2]==True:
 				if vecino[1][0] != addprev[0] and vecino[1][1] != addprev[1]: #me aseguro de no enviar al vecino que me envio el broadcast original
 					#objeto = objeto = (tipo).to_bytes(1, byteorder = 'big')
 					#objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
