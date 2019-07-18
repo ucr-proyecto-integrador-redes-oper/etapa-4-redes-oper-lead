@@ -316,26 +316,29 @@ class NodoNaranja:
                         #print("Paquete de tipo: ", bluePacket.tipo)
                         if bluePacket.tipo == 14:
                             # es un paquete de solicitud.
-                            ipAzul = bluePacket.ipAzul
-                            puertoAzul = bluePacket.puertoAzul
+                            if len(self.tablaNodosAzules.nodosDisponibles) != 0:
+                                ipAzul = bluePacket.ipAzul
+                                puertoAzul = bluePacket.puertoAzul
 
-                            #print("Es un paquete de solicitud azul con IP: ", str(ipAzul), " y puerto: ", puertoAzul)
-                            nodoSolicitado = self.tablaNodosAzules.getNodoDisponible()
-                            #nodoSolicitado = 4
-                            #self.SNRN = 0
-                            self.tablaNodosAzules.marcarComoSolicitado(nodoSolicitado)
-                            #print("Nodo solicitado: ", nodoSolicitado)
-                            prioridad = self.rand.randrange(0, 4294967296)
-                            self.diccionariosACKs[self.SNRN] = acks
-                            # print(self.diccionariosACKs)
-                            snSolicitud = self.SNRN
-                            for i in self.routingTable.table:
-                                if not i.getNode() == self.nodeID:
-                                    request = n_nPaq(0, self.SNRN, self.nodeID, i.getNode(), 'r', nodoSolicitado, i.getIp(), i.getPort(), prioridad)
-                                    request = request.serialize()
-                                    self.colaSalida.put(request)
-                            self.SNRN = self.nextSNRN(self.SNRN) # avanzo el SN para ponerle uno distinto al siguiente paquete de datos.
-                            procesando_solicitud_azul = True
+                                #print("Es un paquete de solicitud azul con IP: ", str(ipAzul), " y puerto: ", puertoAzul)
+                                nodoSolicitado = self.tablaNodosAzules.getNodoDisponible()
+                                #nodoSolicitado = 4
+                                #self.SNRN = 0
+                                self.tablaNodosAzules.marcarComoSolicitado(nodoSolicitado)
+                                #print("Nodo solicitado: ", nodoSolicitado)
+                                prioridad = self.rand.randrange(0, 4294967296)
+                                self.diccionariosACKs[self.SNRN] = acks
+                                # print(self.diccionariosACKs)
+                                snSolicitud = self.SNRN
+                                for i in self.routingTable.table:
+                                    if not i.getNode() == self.nodeID:
+                                        request = n_nPaq(0, self.SNRN, self.nodeID, i.getNode(), 'r', nodoSolicitado, i.getIp(), i.getPort(), prioridad)
+                                        request = request.serialize()
+                                        self.colaSalida.put(request)
+                                self.SNRN = self.nextSNRN(self.SNRN) # avanzo el SN para ponerle uno distinto al siguiente paquete de datos.
+                                procesando_solicitud_azul = True
+                            else:
+                                print("Solicitud rechazada: ya no hay más nodos azules disponibles en el grafo")
                     else: # si ya estaba procesando una solicitud entonces devuelvo el paquete a la cola.
                         #print("me llegó una solicitud mientras proceso otra, devolví la solicitud a la cola.")
                         self.colaEntrada.put(packet)
