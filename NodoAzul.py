@@ -647,12 +647,12 @@ class nodo_azul:
 	def ConsoleInput(self):
 		while True:
 			string_input = """Digite 1 si desea imprimir la lista de vecinos
-	Digite 2 si desea imprimir el ID del nodo
-	Digite 3 si desea imprimir el ip del nodo azul
-	Digite 4 si desea imprimir el puerto del nodo azul
-	Digite 5 si desea imprimir el ip del nodo naranja
-	Digite 6 si desea imprimir el puerto del nodo naranja
-	O bien digite 7 para matar al nodo azul\n"""
+Digite 2 si desea imprimir el ID del nodo
+Digite 3 si desea imprimir el ip del nodo azul
+Digite 4 si desea imprimir el puerto del nodo azul
+Digite 5 si desea imprimir el ip del nodo naranja
+Digite 6 si desea imprimir el puerto del nodo naranja
+O bien digite 7 para matar al nodo azul\n"""
 			input_usuario = int(input(string_input))
 			if input_usuario == 1:
 				print("Lista vecinos: ", self.lista_vecinos)
