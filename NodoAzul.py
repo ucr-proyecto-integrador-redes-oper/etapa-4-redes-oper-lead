@@ -19,11 +19,13 @@ class nodo_azul:
 		self.ip_naranja = ip_naranja
 		self.file_ID = 0
 		self.chunk_ID = 0
-		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
+		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto] [ ( id , ( ip, puerto ) ) , (id, (ip , puerto) ), etc ]
+		# lista_vecinos[elemento][0] = id, lista_vecinos[elemento][1] = address, lista_vecinos[elemento][1][0] = ip, lista_vecinos[elemento][1][1] = puerto
 		self.vecinoSaidHello = {} #diccionario [id] = bool saludó?
 		self.lista_vecinos_arbol = [] 
 		self.iDos_iDoNots = []
 		self.chunks_almacenados = []
+		self.rand = random
 		# self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		# self.lock_lista_mensajes_enviados = Lock()
 		# self.lista_mensajes_recibidos = []  # Control de mensajes recibidos
@@ -124,22 +126,42 @@ class nodo_azul:
 	def revisar_IDos_IDoNots(self):
 		vecino_arbol = False
 		while vecino_arbol == False:
-			if len(self.iDos_iDoNots) != len(self.lista_vecinos):
-				print("NO han llegado suficientes mensajes!") # Me duermo 1 segundo, espero, para no preguntar tan seguido
-			else: # Miden los mismo, tengo la respuesta de todos
-				todos_iDoNot = True
-				for paquete in self.iDos_iDoNots: # Son tuplas de la forma (paquete , (IP , Puerto))
-					tipo_paquete = paquete[0].tipo
-					if tipo_paquete == 12: # I DO 
-						todos_iDoNot = False
-						
-				if todos_iDoNot == True: # Borrar la lista, ninguno pertenece al arbol
-					self.iDos_iDoNots[:] = []  # Esto borra toda la lista
-					time.sleep(2)  # Me duermo 2 segundos
-					if not self.InTree:
-						self.joinTree() # Vuelvo a mandar el joinTree para obtener mas iDo o iDoNot
-				else: # Si hay alguien que pertenece al arbol
-					print("Tengo que buscar la menor y hacerlo mi tata")
+			if self.graphComplete and self.everyoneSaidHi:
+				print("TAMAÑO DE LA LISTA DE IDO: ", len(self.iDos_iDoNots), "TAMAÑO DE LA LISTA DE VECINOS: ", len(self.lista_vecinos))
+				if len(self.iDos_iDoNots) != len(self.lista_vecinos):
+					print("NO han llegado suficientes mensajes!") # Me duermo 1 segundo, espero, para no preguntar tan seguido
+					time.sleep(2)
+				else: # Miden los mismo, tengo la respuesta de todos
+					todos_iDoNot = True
+					for paquete in self.iDos_iDoNots: # Son tuplas de la forma (paquete , (IP , Puerto))
+						tipo_paquete = paquete[0].tipo
+						if tipo_paquete == 12: # I DO
+							todos_iDoNot = False
+						elif tipo_paquete == 18: #I DO NOT
+							self.iDos_iDoNots.remove(paquete) # si es un I DO NOT, lo saco de la lista.
+
+					if todos_iDoNot == True: # Borrar la lista, ninguno pertenece al arbol
+						self.iDos_iDoNots[:] = []  # Esto borra toda la lista
+						time.sleep(2)  # Me duermo 2 segundos
+						if not self.InTree:
+							self.joinTree() # Vuelvo a mandar el joinTree para obtener mas iDo o iDoNot
+					else: # Si hay alguien que pertenece al arbol
+						print("Tengo que buscar la menor y hacerlo mi tata")
+						menor = 999999999999
+						for paquete in self.iDos_iDoNots:
+							paq_id = paquete[0].node_id
+							if paq_id < menor:
+								menor = paq_id
+						daddy = a_aPaq(2, 13, self.id_nodo,)
+						daddy = daddy.serialize()
+						address = 0
+						for vecino in self.lista_vecinos:
+							if vecino[0] == menor:
+								address = vecino[1]
+								self.lista_vecinos_arbol.append(vecino)
+						self.mensajes_enviar.append((daddy, address))
+						self.InTree = True
+						vecino_arbol = True
 				
 				
 	def analizar_peticiones(self):
@@ -170,6 +192,8 @@ class nodo_azul:
 							self.lista_vecinos = package.listaVecinos # Es una tupla con una tupla: lista_vecinos[0] da el id, lista_vecinos[1] da la tupla de dirección.
 					elif tipo_paquete == 17:
 						self.graphComplete = True
+						if self.id_nodo == 1:
+							self.InTree = True
 				elif categoria == 2 and self.graphComplete: # Paquete es azul-azul
 					package = a_aPaq()
 					package = package.unserialize(paquete)
@@ -210,7 +234,7 @@ class nodo_azul:
 						self.eliminar_objeto(paquete)
 					elif tipo_paquete == 11:
 						print("Me preguntan si pertenesco al arbol generador")
-						self.check_if_tree(paquete,address)
+						self.check_if_tree(package,address)
 					elif tipo_paquete == 13:
 						print("Soy padre!")
 						self.newSon(paquete)
@@ -369,7 +393,7 @@ class nodo_azul:
 	def joinTree(self):
 		# revisa si vecino es parte del arbol  preguntando a sus vecinos si pertenecen
 		print("Vecino es parte de arbol?")
-		paquete = a_aPaq(0,11,0,0,0,0)
+		paquete = a_aPaq(2, 11, self.id_nodo)
 		paq = paquete.serialize()
 
 		for vecino in self.lista_vecinos: # Mando un mensaje a todos mis vecinos
@@ -380,25 +404,22 @@ class nodo_azul:
 
 	def check_if_tree(self,paquete,address):
 		# reviso si pertenesco a Arbol
-		vecino = a_aPaq(0,0,0,0,0,0)
-		vecino.unserialize(paquete)
-		id_vecino = int (vecino.fileID)
-
+		id_vecino = paquete.node_id
 		if(self.InTree):
 			print("Estoy en el arbol!")#envio mensaje diciendo que si tipo ido
 			for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
-					paquete = a_aPaq(0,12,0,0,0,0)
+					paquete = a_aPaq(2,12,self.id_nodo)
 					IDO = paquete.serialize()
-					address=(vecino[1][0], vecino[1][1])
+					address=(vecino[1])
 					self.mensajes_enviar.append((IDO,address))
 					#self.secure_udp.send(IDO, vecino[1][0], vecino[1][1])
 		else:
 			print("No Estoy en el arbol!")#envia mensaje diciendo que no TIPO idonot
 			for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
-					paquete = a_aPaq(0,18,0,0,0,0)
-					address=(vecino[1][0], vecino[1][1])
+					paquete = a_aPaq(2,18, self.id_nodo)
+					address=(vecino[1])
 					IDONOT = paquete.serialize()
 					self.mensajes_enviar.append((IDONOT,address))
 					#self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
@@ -406,22 +427,22 @@ class nodo_azul:
 	def newSon(self, paquete):
 		#si recibe un mensaje tipo daddy de un vecino que no se habia unido al arbol
 		print("Ahora este nodo es hijo mio")
-		vecino = a_aPaq(0,0,0,0,0,0)
+		vecino = a_aPaq()
 		vecino.unserialize(paquete)
-		id_vecino = int (vecino.fileID)
+		id_vecino = int (vecino.node_id)
 
 		for vecino in self.lista_vecinos:
 			if vecino[0] == id_vecino:
 				self.lista_vecinos_arbol.append(vecino) # Anade a la lista de arbol generador
 
-	def daddy(self, paquete,address):
+	def daddy(self, paquete, address):
 		#si un vecino es parte del arbol, elijo de menor ID y le mando un mensaje tipo daddy
 		print("Ahora este sera mi papi")
 		inTree=True
-		vecino = a_aPaq(0,0,0,0,0,0)
+		vecino = a_aPaq()
 		vecino.unserialize(paquete)
-		id_vecino = int (vecino.fileID)
-		paquete= a_aPaq(0,13,self.id_nodo,0,0,0)
+		id_vecino = int (vecino.node_id)
+		paquete= a_aPaq(2,13,self.id_nodo,)
 		daddy = paquete.serialize()
 		for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
@@ -441,7 +462,7 @@ class nodo_azul:
 				#objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
 				#self.secure_udp.send(objeto, vecino[1][0], vecino[1][1])
 				address = (vecino[1][0], vecino[1][1])
-				self.mensajes_enviar.append(paq,address)
+				self.mensajes_enviar.append((paq,address))
 #hace falta q elimine el que le envio el mensaje original de donde vino y pertenescan al grafo
 	def depositar_objeto(self, objeto):
 		# Depositar objeto
@@ -453,7 +474,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 
 		if cat == 3:
@@ -479,7 +500,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 
 		if self.id_nodo_verde_actual == verde:
@@ -500,7 +521,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 
 		if cat == 3:
@@ -526,7 +547,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 		id_chunk = paq.chunkID
 
@@ -546,7 +567,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 
 		if cat == 3:
@@ -572,7 +593,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 		id_chunk = paq.chunkID
 		chunk = paq.payload
@@ -593,7 +614,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 
 		if cat == 3:
@@ -619,7 +640,7 @@ class nodo_azul:
 		paq = a_aPaq()
 		paq.unserialize(objeto)
 		cat = paq.category
-		verde = paq.greenID
+		verde = paq.node_id
 		id_archivo = paq.fileID
 		id_nodo = paq.chunkID
 
@@ -675,6 +696,7 @@ Digite 3 si desea imprimir el ip del nodo azul
 Digite 4 si desea imprimir el puerto del nodo azul
 Digite 5 si desea imprimir el ip del nodo naranja
 Digite 6 si desea imprimir el puerto del nodo naranja
+Digite 7 si desea imprimir la lista de vecinos del arbol
 O bien digite 7 para matar al nodo azul\n"""
 			input_usuario = int(input(string_input))
 			if input_usuario == 1:
@@ -690,6 +712,8 @@ O bien digite 7 para matar al nodo azul\n"""
 			elif input_usuario == 6:
 				print("Puerto del nodo naranja: ", self.puerto_naranja)
 			elif input_usuario == 7:
+				print("Lista de vecinos en el árbol: ", self.lista_vecinos_arbol)
+			elif input_usuario == 8:
 				print("Matando nodo azul...")
 				sys.exit(0)
 			else:

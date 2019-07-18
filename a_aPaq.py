@@ -12,30 +12,31 @@ class a_aPaq:
 
 	def serialize(self):
 
+		paquete = 0
 		if(self.tipo == 0):
-			paquete = struct.pack('!BBBHI', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
+			paquete = struct.pack('!BBHIB', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
 			paquete = paquete + self.payload
 		if(self.tipo == 1):
 			paquete = struct.pack('!BBH', self.category, self.tipo, self.node_id)
 		if(self.tipo == 2):
-			paquete = struct.pack('!BBBH', self.category, self.tipo, self.node_id, self.fileID)
+			paquete = struct.pack('!BBHI', self.category, self.tipo, self.node_id, self.fileID)
 		if(self.tipo == 3):
-			paquete = struct.pack('!BBBH', self.category, self.tipo, self.node_id, self.fileID)
+			paquete = struct.pack('!BBHI', self.category, self.tipo, self.node_id, self.fileID)
 		if(self.tipo == 4):
-			paquete = struct.pack('!BBBH', self.category, self.tipo, self.node_id, self.fileID)
+			paquete = struct.pack('!BBHI', self.category, self.tipo, self.node_id, self.fileID)
 		if(self.tipo == 5):
-			paquete = struct.pack('!BBBHI', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
+			paquete = struct.pack('!BBHIB', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
 		if(self.tipo == 6):
-			paquete = struct.pack('!BBBH', self.category, self.tipo, self.node_id, self.fileID)
+			paquete = struct.pack('!BBHI', self.category, self.tipo, self.node_id, self.fileID)
 		if(self.tipo == 7):
-			paquete = struct.pack('!BBBHI', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
+			paquete = struct.pack('!BBHIB', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
 			paquete = paquete + self.payload
 		if(self.tipo == 8):
-			paquete = struct.pack('!BBBH', self.category, self.tipo, self.node_id, self.fileID)
+			paquete = struct.pack('!BBHI', self.category, self.tipo, self.node_id, self.fileID)
 		if(self.tipo == 9):
-			paquete = struct.pack('!BBBHH', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
+			paquete = struct.pack('!BBHIB', self.category, self.tipo, self.node_id, self.fileID, self.chunkID)
 		if(self.tipo == 10):
-			paquete = struct.pack('!BBBH', self.category, self.tipo, self.node_id, self.fileID)
+			paquete = struct.pack('!BBHI', self.category, self.tipo, self.node_id, self.fileID)
 		if(self.tipo == 11):
 			paquete = struct.pack('!BBH', self.category, self.tipo, self.node_id)
 		if(self.tipo == 13):
@@ -49,9 +50,9 @@ class a_aPaq:
 
 	def unserialize(self, byteP):
 		tipo = int.from_bytes(byteP[1:2], byteorder=('big'))
+		tam = len(byteP)
 		if(tipo == 0):  #PUT CHUNK
-			tam = len(byteP)
-			paquete = struct.unpack('!BBBHI', byteP[0:9])
+			paquete = struct.unpack('!BBHIB', byteP[0:9])
 			self.category = paquete[0]
 			self.tipo = paquete[1]	# tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
@@ -64,38 +65,38 @@ class a_aPaq:
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nodo q que envio
 		if(tipo == 2):  #EXISTS
-			paquete = struct.unpack('!BBBH', byteP[0:])
+			paquete = struct.unpack('!BBHI', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
 		if(tipo == 3):  # R/ a 2
-			paquete = struct.unpack('!BBBH', byteP[0:])
+			paquete = struct.unpack('!BBHI', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
 		if(tipo == 4):  #COMPLETE
-			paquete = struct.unpack('!BBBH', byteP[0:])
+			paquete = struct.unpack('!BBHI', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
 		if(tipo == 5):  # R/ a 4
-			paquete = struct.unpack('!BBBHI', byteP[0:])
+			paquete = struct.unpack('!BBHIB', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
 			self.chunkID = paquete[4]  # ID del chunk
 		if(tipo == 6):  #GET
-			paquete = struct.unpack('!BBBH', byteP[0:])
+			paquete = struct.unpack('!BBHI', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
 		if(tipo == 7):  # R/ a 6
-			paquete = struct.unpack('!BBBHI', byteP[0:])
+			paquete = struct.unpack('!BBHIB', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
@@ -103,43 +104,48 @@ class a_aPaq:
 			self.chunkID = paquete[4]  # ID del chunk
 			self.payload = byteP[9:tam]
 		if(tipo == 8):  #LOCATE
-			paquete = struct.unpack('!BBBH', byteP[0:])
+			paquete = struct.unpack('!BBHI', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
 		if(tipo == 9):  # R/ a 8
-			paquete = struct.unpack('!BBBH', byteP[0:])
+			paquete = struct.unpack('!BBHIB', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
 			self.chunkID = paquete[4]  # ID del nodo
 		if(tipo == 10):  #DELETE
-			paquete = struct.unpack('!BBBH', byteP[0:])
+			paquete = struct.unpack('!BBHI', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
 			self.node_id = paquete[2]  # ID de nuestro verde
 			self.fileID = paquete[3]  # ID del archivo
+
 		if(tipo == 11):  #JoinTree
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
+			self.node_id = paquete[2] # id nodo azul
 
 		if(tipo == 13):  #daddy Tenes una bendicion
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
+			self.node_id = paquete[2] # id nodo azul
 
 		if(tipo == 12):  #Si soy parte del arbol
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
+			self.node_id = paquete[2] # id nodo azul
 
 		if(tipo == 18):  #No soy parte del arbol
 			paquete = struct.unpack('!BBH', byteP[0:])
 			self.category = paquete[0]
 			self.tipo = paquete[1]  #tipo
+			self.node_id = paquete[2] # id nodo azul
 
 		return self
 
