@@ -396,9 +396,8 @@ class nodo_azul:
 					#IDONOT = IDONOT = (13).to_bytes(1, byteorder = 'big')
 					#IDONOT += (self.id_nodo).to_bytes(2, byteorder = 'big')
 					#self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
-					address = (vecino[1][0], vecino[1][1])
 					self.mensajes_enviar.append((daddy,address))
-					self.lista_vecinos_arbol.append((nodo_id, direccion)) # Anade a la lista de arbol generador
+					self.lista_vecinos_arbol.append(vecino) # Anade a la lista de arbol generador
 
 	###### COMUNICACION CON VERDES	######
 	def broadcast(self, tipo, green, file_id, chuck_id, payload, addprev):#envia a vecinos que pertenescan al Arbol
