@@ -23,7 +23,6 @@ class nodo_azul:
 		self.vecinoSaidHello = {} #diccionario [id] = bool saludó?
 		self.lista_vecinos_arbol = [] 
 		self.iDos_iDoNots = []
-		self.lock_iDos_iDoNots = Lock()
 		self.chunks_almacenados = []
 		# self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		# self.lock_lista_mensajes_enviados = Lock()
@@ -125,7 +124,6 @@ class nodo_azul:
 	def revisar_IDos_IDoNots(self):
 		vecino_arbol = False
 		while vecino_arbol == False:
-			self.lock_iDos_iDoNots.acquire()
 			if len(self.iDos_iDoNots) != len(self.lista_vecinos):
 				print("NO han llegado suficientes mensajes!") # Me duermo 1 segundo, espero, para no preguntar tan seguido
 			else: # Miden los mismo, tengo la respuesta de todos
@@ -137,11 +135,9 @@ class nodo_azul:
 						
 				if todos_iDoNot == True: # Borrar la lista, ninguno pertenece al arbol
 					self.iDos_iDoNots[:] = []  # Esto borra toda la lista
-					self.lock_iDos_iDoNots.release()
 					time.sleep(2)  # Me duermo 2 segundos
 					if not self.InTree:
 						self.joinTree() # Vuelvo a mandar el joinTree para obtener mas iDo o iDoNot
-					
 				else: # Si hay alguien que pertenece al arbol
 					print("Tengo que buscar la menor y hacerlo mi tata")
 				
@@ -220,15 +216,11 @@ class nodo_azul:
 						self.newSon(paquete)
 					elif tipo_paquete == 12: #IDO
 						print("Si pertenece al Arbol")
-						self.lock_iDos_iDoNots.acquire()
 						self.iDos_iDoNots.append((package, address))
-						self.lock_iDos_iDoNots.release()
 						#if not self.InTree:#revisa no estar ya en el arbol asi se evitan ciclos
 							#self.daddy(paquete,address)
 					elif tipo_paquete == 18: #IDONOT
-						self.lock_iDos_iDoNots.acquire()
 						self.iDos_iDoNots.append((package, address))
-						self.lock_iDos_iDoNots.release()
 						print("No pertenece al Arbol el vecino:",address)
 
 					else:
