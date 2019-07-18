@@ -159,7 +159,7 @@ class NodoNaranja:
         ganeNodo = False
         acks_Write = {}
         acks_Write_Done = False
-        MAX_NODOS_NARANJA = 3
+        MAX_NODOS_NARANJA = 4
         procesando_solicitud_azul = False
         graphComplete = False
         workDone = False
