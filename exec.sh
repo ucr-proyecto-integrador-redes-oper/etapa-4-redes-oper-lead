@@ -3,13 +3,13 @@
 #si le sale que no tiene permiso le da chmod 755
 
 echo creando
-IP=$1
+IPAzul=$1
 cantidadAZULES=$2
 PuertoAzul=$3
 IPNaranja=$4
 PuertoNaranja=$5
 
-echo "Ip:$IP  Cantidad de Azules:$cantidadAZULES Puerto Naranja: $PuertoN Puerto Azul inicial: $Puerto"
+echo "Ip:$IPAzul  Cantidad de Azules:$cantidadAZULES Puerto Naranja: $PuertoNaranja Puerto Azul inicial: $PuertoAzul"
 
 counter=1
 
@@ -18,8 +18,8 @@ do
 echo creo Nodo Azul numero: $counter
 ((counter++))
 ((PuertoAzul++))
-echo $Puerto
-gnome-terminal -- python3 FastmainAzul.py $IP $Puerto $IPNaranja $PuertoN
+echo $PuertoAzul
+gnome-terminal -- python3 FastmainAzul.py $IPAzul $PuertoAzul $IPNaranja $PuertoNaranja
 
 done
 echo All done
