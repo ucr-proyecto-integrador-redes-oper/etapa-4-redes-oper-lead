@@ -21,6 +21,7 @@ class nodo_azul:
 		self.chunk_ID = 0
 		self.lista_vecinos = []  # Vecinos azules del nodo azul[id][ip][puerto][true/false de direcciones][pertenece o no a arbol gen]
 		self.vecinoSaidHello = {} #diccionario [id] = bool saludó?
+		self.lista_vecinos_arbol = []
 		self.chunks_almacenados = []
 		# self.lista_mensajes_enviados = []  # Control de mensajes enviados
 		# self.lock_lista_mensajes_enviados = Lock()
@@ -353,8 +354,6 @@ class nodo_azul:
 
 		if(self.InTree):
 			print("Estoy en el arbol!")#envio mensaje diciendo que si tipo ido
-
-
 			for vecino in self.lista_vecinos:
 				if vecino[0]==id_vecino:
 					paquete = a_aPaq(0,12,0,0,0,0)
@@ -381,10 +380,7 @@ class nodo_azul:
 
 		for vecino in self.lista_vecinos:
 			if vecino[0] == id_vecino:
-				self.lista_vecinos.remove(vecino)
-				nodo_id = vecino[0]
-				direccion = vecino[1]
-				self.lista_vecinos.append((nodo_id, direccion, True))
+				self.lista_vecinos_arbol.append(vecino) # Anade a la lista de arbol generador
 
 	def daddy(self, paquete,address):
 		#si un vecino es parte del arbol, elijo de menor ID y le mando un mensaje tipo daddy
@@ -402,23 +398,19 @@ class nodo_azul:
 					#self.secure_udp.enviar(IDONOT, vecino[1][0], vecino[1][1])
 					address = (vecino[1][0], vecino[1][1])
 					self.mensajes_enviar.append((daddy,address))
-					self.lista_vecinos.remove(vecino)
-					nodo_id = vecino[0]
-					direccion = vecino[1]
-					self.lista_vecinos.append((nodo_id, direccion, True))
+					self.lista_vecinos_arbol.append((nodo_id, direccion)) # Anade a la lista de arbol generador
 
 	###### COMUNICACION CON VERDES	######
 	def broadcast(self, tipo, green, file_id, chuck_id, payload, addprev):#envia a vecinos que pertenescan al Arbol
 		paquete = a_aPaq(0,tipo,green,file_id,chuck_id,payload)
 		paq = paquete.serialize()
-		for vecino in self.lista_vecinos:
-			if vecino[2]==True:
-				if vecino[1][0] != addprev[0] and vecino[1][1] != addprev[1]: #me aseguro de no enviar al vecino que me envio el broadcast original
-					#objeto = objeto = (tipo).to_bytes(1, byteorder = 'big')
-					#objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
-					#self.secure_udp.send(objeto, vecino[1][0], vecino[1][1])
-					address = (vecino[1][0], vecino[1][1])
-					self.mensajes_enviar.append(paq,address)
+		for vecino in self.lista_vecinos_arbol: # Itero sobre lista de vecinos arbol
+			if vecino[1][0] != addprev[0] and vecino[1][1] != addprev[1]: #me aseguro de no enviar al vecino que me envio el broadcast original
+				#objeto = objeto = (tipo).to_bytes(1, byteorder = 'big')
+				#objeto += (self.id_nodo).to_bytes(2, byteorder = 'big')
+				#self.secure_udp.send(objeto, vecino[1][0], vecino[1][1])
+				address = (vecino[1][0], vecino[1][1])
+				self.mensajes_enviar.append(paq,address)
 #hace falta q elimine el que le envio el mensaje original de donde vino y pertenescan al grafo
 	def depositar_objeto(self, objeto):
 		# Depositar objeto
