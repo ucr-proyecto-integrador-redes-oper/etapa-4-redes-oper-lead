@@ -60,10 +60,7 @@ class nodo_azul:
 		peticion = n_aPaq(1, self.sn, 14, 0, self.ip, self.puerto,)
 		peticion = peticion.serialize()
 		address = (self.ip_naranja, self.puerto_naranja)
-		#paquete = (14).to_bytes(1, byteorder='big')
 		self.mensajes_enviar.append((peticion,address))
-		#self.secure_udp.send(peticion, self.ip_naranja, self.puerto_naranja)
-		# self.recibir_respuesta_peticion()
 
 	def revisar_IDos_IDoNots(self):
 		vecino_arbol = False
